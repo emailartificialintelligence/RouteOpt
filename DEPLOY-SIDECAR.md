@@ -100,6 +100,26 @@ gcloud run services describe routeplan-solver --region europe-west1 \
 own function limit is shorter than the solve. Lower `ORTOOLS_MAX_BUDGET_MS`, or
 set `--min-instances 1`.
 
+**"Billing account not found."** A project needs a billing account attached
+before Google will enable any service, free tier included. Link the one you
+already have:
+
+```bash
+gcloud billing accounts list
+gcloud billing projects link YOUR-PROJECT-ID --billing-account=THE-ACCOUNT-ID
+```
+
+**"the default service account is missing required IAM permissions."** On
+projects created after mid-2024 Google no longer grants these automatically.
+The deploy script now does it for you, but if you hit it by hand:
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe YOUR-PROJECT-ID --format='value(projectNumber)')
+gcloud projects add-iam-policy-binding YOUR-PROJECT-ID \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/cloudbuild.builds.builder"
+```
+
 **"container failed to start"** in the Cloud Run logs. The service must listen
 on the `PORT` Cloud Run injects — it does, but this is the first thing to check
 if you change how it starts.

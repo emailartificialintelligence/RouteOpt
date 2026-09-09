@@ -42,6 +42,26 @@ echo "==> project $PROJECT, region $REGION, service $SERVICE"
 gcloud config set project "$PROJECT" >/dev/null
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
 
+# Grant the default build account the roles it needs.
+#
+# Google stopped granting these automatically on projects created after
+# mid-2024. Without them the deploy fails at "could not resolve source" with an
+# IAM permission error naming a service account you have never heard of, which
+# reads like a bug in this script rather than a one-line fix.
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
+BUILD_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+if ! gcloud projects get-iam-policy "$PROJECT" \
+      --flatten='bindings[].members' \
+      --filter="bindings.members:${BUILD_SA} AND bindings.role:roles/cloudbuild.builds.builder" \
+      --format='value(bindings.role)' | grep -q .; then
+  echo "==> granting build permissions to $BUILD_SA"
+  gcloud projects add-iam-policy-binding "$PROJECT" \
+    --member="serviceAccount:${BUILD_SA}" \
+    --role="roles/cloudbuild.builds.builder" \
+    --condition=None --quiet >/dev/null
+fi
+
 echo "==> building and deploying (first run takes a few minutes)"
 gcloud run deploy "$SERVICE" \
   --source sidecar \
