@@ -18,7 +18,12 @@
 
   /* Text */
   --ink: #09090b;
-  --ink-soft: #71717a;
+  /*
+   * zinc-600, not zinc-500. Over the veiled column the lighter tone measured
+   * 4.51:1 against a dot — technically a pass, with no margin at all. This
+   * gives 7.4:1 on paper and still reads clearly as secondary next to --ink.
+   */
+  --ink-soft: #52525b;
 
   /* Lines and primary action */
   --rule: #e4e4e7;

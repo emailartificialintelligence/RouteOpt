@@ -167,6 +167,7 @@
 
 .main {
   flex: 1;
+  padding: 44px 0 0;
 }
 
 .wrap {
@@ -185,12 +186,31 @@
  * is fine for a dense stop list but tiring for six paragraphs about k-means.
  */
 .prose {
-  max-width: 68ch;
+  max-width: 72ch;
   margin: 0 auto;
-  padding: 0 20px;
+  /*
+   * Variant B, the veil: a translucent wash so the dotted ground still shows
+   * through, softened, rather than being blanked out behind the text. The blur
+   * takes the edge off the dots directly under the words without hiding them.
+   *
+   * Slightly darker body text than the marketing pages use — over texture,
+   * zinc-700 holds its edge where zinc-600 starts to shimmer.
+   */
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 0 0 1px rgba(228, 228, 231, 0.7);
+  border-radius: 14px;
+  padding: 40px 44px;
   font-size: 15.5px;
   line-height: 1.75;
   color: #3f3f46;
+}
+
+@media (max-width: 760px) {
+  .prose {
+    padding: 26px 22px;
+    border-radius: 12px;
+  }
 }
 
 .prose h2 {
@@ -276,7 +296,7 @@
 }
 
 .pageTitle {
-  margin: 64px 0 14px;
+  margin: 8px 0 14px;
   font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.038em;
@@ -808,75 +828,4 @@
   }
 }
 
-/* ================================================================ variants
- *
- * Three ways to keep long prose readable while the dotted ground stays
- * visible. Applied to the .prose column; pick one and delete the others.
- */
 
-/* A — Panel. Text sits on solid paper with a hairline and a soft shadow.
- *     Dots stay in the margins. Highest contrast, most "document". */
-.prosePanel {
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 40px 44px;
-  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 12px 32px rgba(9, 9, 11, 0.05);
-}
-
-/* B — Veil. A translucent white wash behind the column. Dots show through,
- *     softened. Keeps the texture present without fighting the words. */
-.proseVeil {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(2px);
-  border-radius: 14px;
-  padding: 36px 40px;
-  box-shadow: 0 0 0 1px rgba(228, 228, 231, 0.7);
-}
-
-/* C — Bare. No backdrop at all; dots run right behind the text, and
- *     readability comes from darker, slightly larger type. */
-.proseBare {
-  color: #27272a;
-  font-size: 16px;
-  line-height: 1.8;
-}
-
-.proseBare :is(h1, h2, h3) {
-  color: #09090b;
-}
-
-@media (max-width: 720px) {
-  .prosePanel,
-  .proseVeil {
-    padding: 26px 20px;
-    border-radius: 12px;
-  }
-}
-
-/* ------------------------------------------------------- variant preview */
-
-.variantGrid {
-  display: grid;
-  gap: 40px;
-  margin: 32px 0 0;
-}
-
-.variantHead {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin: 0 0 12px;
-}
-
-.variantName {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-.variantNote {
-  color: var(--ink-soft);
-  font-size: 13px;
-}
