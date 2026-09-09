@@ -1,0 +1,33 @@
+{
+  "depot": {
+    "lat": 48.8443,
+    "lng": 2.3743,
+    "label": "Depot",
+    "address": "Gare de Lyon, Paris"
+  },
+  "stops": [
+    { "id": "s1",  "label": "Louvre",         "lat": 48.8606, "lng": 2.3376 },
+    { "id": "s2",  "label": "Notre-Dame",     "lat": 48.8530, "lng": 2.3499 },
+    { "id": "s3",  "label": "Eiffel Tower",   "lat": 48.8584, "lng": 2.2945 },
+    { "id": "s4",  "label": "Arc de Triomphe","lat": 48.8738, "lng": 2.2950 },
+    { "id": "s5",  "label": "Sacre-Coeur",    "lat": 48.8867, "lng": 2.3431 },
+    { "id": "s6",  "label": "Pantheon",       "lat": 48.8462, "lng": 2.3464 },
+    { "id": "s7",  "label": "Musee d'Orsay",  "lat": 48.8600, "lng": 2.3266 },
+    { "id": "s8",  "label": "Bastille",       "lat": 48.8532, "lng": 2.3692 },
+    { "id": "s9",  "label": "Pere Lachaise",  "lat": 48.8614, "lng": 2.3922 },
+    { "id": "s10", "label": "Parc Montsouris","lat": 48.8220, "lng": 2.3380 },
+    { "id": "s11", "label": "Gare du Nord",   "lat": 48.8809, "lng": 2.3553 },
+    { "id": "s12", "label": "Chateau Vincennes","lat": 48.8353, "lng": 2.4353 }
+  ],
+  "vehicles": [
+    { "id": "v1", "label": "Van 1" },
+    { "id": "v2", "label": "Van 2" },
+    { "id": "v3", "label": "Van 3" }
+  ],
+  "options": {
+    "objective": "balanced",
+    "roundTrip": true,
+    "defaultServiceTime": 300,
+    "solver": "greedy"
+  }
+}

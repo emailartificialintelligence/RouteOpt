@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.local
+*.log
+sidecar/.venv
+__pycache__
+osrm-data
+caddy-data
+coverage

@@ -1,0 +1,27 @@
+# Caddy obtains and renews a Let's Encrypt certificate automatically. The only
+# prerequisite is that {$DOMAIN} resolves to this machine and ports 80 and 443
+# are open.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# The app sets its own Content-Security-Policy per request (it needs a
+	# nonce), so Caddy must not add or override one here.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy app:3000 {
+		# The app reads these to rate limit per client. They are only
+		# trustworthy because this proxy sets them itself.
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

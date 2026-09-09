@@ -1,0 +1,782 @@
+/*
+ * A route sheet, not a dashboard.
+ *
+ * Sections are separated by hairlines rather than boxed into cards, rows are
+ * dense and left-aligned, and nothing floats above anything else. The map is
+ * the product; this rail is the paperwork beside it.
+ */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) 1fr;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.mapPane {
+  position: relative;
+  background: var(--paper-sunk);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--paper);
+  border-right: 1px solid var(--rule);
+}
+
+/* ------------------------------------------------------------------ header */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------------- sections */
+
+.section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/*
+ * Sentence case, normal weight, no letter-spacing. An all-caps eyebrow would
+ * shout a label that only needs to be found.
+ */
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.count {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ fields */
+
+.field {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+}
+
+.field::placeholder {
+  color: var(--ink-soft);
+}
+
+.textarea {
+  composes: field;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+}
+
+.row > .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.button {
+  padding: 7px 12px;
+  border: 1px solid var(--signal);
+  border-radius: 2px;
+  background: var(--signal);
+  color: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  border-color: var(--rule);
+  background: var(--paper-sunk);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.secondary {
+  composes: button;
+  border-color: var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--paper-sunk);
+}
+
+/* A toggle that is currently on reads as pressed, not as a second primary. */
+.toggleOn {
+  composes: secondary;
+  border-color: var(--signal);
+  background: var(--signal-tint);
+  color: var(--signal);
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------- stop list */
+
+.stopList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  background: none;
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  text-align: left;
+}
+
+.stop:hover {
+  background: var(--paper-sunk);
+}
+
+.stopSelected {
+  background: var(--signal-tint);
+}
+
+.stopSelected:hover {
+  background: var(--signal-tint);
+}
+
+.index {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+
+.stopName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stopNote {
+  display: block;
+  margin-top: 2px;
+  color: var(--warn);
+  font-size: 12px;
+}
+
+/* The coordinate line. Tabular so the columns align down the list. */
+.stopCoords {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stopAddress {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Status is a word, not a coloured dot. A dispatcher scanning a column needs to
+ * know which stop is wrong without decoding a legend.
+ */
+.status {
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+.statusReview {
+  composes: status;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.statusFailed {
+  composes: status;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.remove {
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.remove:hover {
+  color: var(--warn);
+}
+
+/* --------------------------------------------------------- candidate picker */
+
+.candidates {
+  margin: 0;
+  padding: 0 16px 10px 46px;
+  list-style: none;
+  border-bottom: 1px solid var(--rule);
+  background: var(--warn-tint);
+}
+
+.candidate {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.candidate:last-child {
+  border-bottom: 0;
+}
+
+.candidate:hover {
+  color: var(--signal);
+}
+
+.candidateMeta {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ states */
+
+.empty {
+  padding: 14px 16px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.progress {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The progress bar is the one moving thing on this screen before a solve, and
+ * it moves because it is reporting real work: one address per second against a
+ * rate-limited geocoder. It is a readout, not an animation.
+ */
+.progressTrack {
+  height: 2px;
+  margin-top: 6px;
+  background: var(--rule);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--signal);
+}
+
+.notice {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--warn-tint);
+  color: var(--warn);
+  font-size: 12px;
+}
+
+.issues {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: var(--warn);
+  font-size: 12px;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  position: sticky;
+  bottom: 0;
+}
+
+.ready {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.blocking {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+/*
+ * On a phone the rail becomes a bottom sheet: the map keeps the top of the
+ * screen because confirming pins is the job, and the list scrolls underneath it.
+ */
+@media (max-width: 768px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  /*
+   * The rail comes first in the DOM so that keyboard and screen-reader users
+   * reach the controls before a map they cannot use. That order is wrong
+   * visually on a phone, where the map has to stay on top and the rail becomes
+   * the sheet below it — so place them explicitly rather than relying on
+   * source order.
+   */
+  .mapPane {
+    grid-row: 1;
+  }
+
+  .rail {
+    grid-row: 2;
+    max-height: 55dvh;
+    border-right: 0;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+/* ------------------------------------------------------------- plan controls */
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.controlLabel {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stepperButton {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stepperButton:disabled {
+  color: var(--rule);
+  cursor: not-allowed;
+}
+
+.stepperButton:hover:not(:disabled) {
+  background: var(--paper-sunk);
+}
+
+.stepperValue {
+  min-width: 30px;
+  padding: 0 2px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  line-height: 26px;
+}
+
+/* A segmented control, flat. Two options, both always visible and readable. */
+.segmented {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.segment {
+  flex: 1;
+  padding: 6px 8px;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.segment + .segment {
+  border-left: 1px solid var(--rule);
+}
+
+.segmentActive {
+  composes: segment;
+  background: var(--signal-tint);
+  color: var(--signal);
+  font-weight: 600;
+}
+
+.select {
+  composes: field;
+  cursor: pointer;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.planButton {
+  composes: button;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+}
+
+/* --------------------------------------------------------------- results */
+
+.resultHead {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.resultTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* The headline number gets room; everything around it stays small. */
+.headline {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.headlineNote {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.saving {
+  color: var(--signal);
+  font-weight: 600;
+}
+
+.vehicle {
+  border-bottom: 1px solid var(--rule);
+}
+
+.vehicleHead {
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  align-items: baseline;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 16px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vehicleHead:hover {
+  background: var(--paper-sunk);
+}
+
+/*
+ * A colour bar, not a dot. It reads as the same object as the line on the map,
+ * and it survives a black-and-white print as a distinguishable weight.
+ */
+.swatch {
+  align-self: stretch;
+  min-height: 26px;
+  border-radius: 1px;
+}
+
+.vehicleName {
+  font-weight: 600;
+}
+
+.vehicleMeta {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vehicleDistance {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.manifest {
+  margin: 0;
+  padding: 0 16px 10px 28px;
+  list-style: none;
+  background: var(--paper-sunk);
+}
+
+/* Collapsed in the browser, revealed by the print stylesheet. */
+.manifestCollapsed {
+  display: none;
+}
+
+.manifestRow {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.manifestRow:last-of-type {
+  border-bottom: 0;
+}
+
+.manifestIndex,
+.manifestLeg {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.manifestActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0 2px;
+}
+
+.idle {
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* ----------------------------------------------------------------- print */
+
+/*
+ * The manifest is printed and read in a van with the engine running. The map,
+ * the controls and the input panel are all irrelevant on paper; what survives
+ * is the list of stops, in order, per vehicle, in black on white.
+ */
+@media print {
+  .shell {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .mapPane,
+  .masthead,
+  .section,
+  .progress,
+  .footer,
+  .stopList {
+    display: none !important;
+  }
+
+  .rail {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+  }
+
+  .vehicle {
+    /* Never split a driver's route across two sheets. */
+    break-inside: avoid;
+    border-bottom: 1px solid #000;
+  }
+
+  .manifest {
+    display: block !important;
+    background: none;
+  }
+
+  .swatch {
+    /* Colour bars must print even when the browser strips backgrounds. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .code,
+  .manifestActions,
+  .vehicleHead {
+    cursor: auto;
+  }
+
+  /* Links, snippets and engine comparisons are chrome; a printed manifest is
+     stops in order, nothing else. */
+  .code,
+  .table {
+    display: none !important;
+  }
+
+  .manifestActions {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------ API snippet */
+
+/*
+ * The one place a monospace face earns its keep. Everywhere else the brief is
+ * legibility of words and numbers; here it is a command someone will paste into
+ * a terminal, and the alignment carries meaning.
+ */
+.code {
+  margin: 8px 0 0;
+  padding: 8px;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ------------------------------------------------------- comparison table */
+
+/*
+ * A results table, in the register of a route sheet: hairline rules, no zebra
+ * striping, numbers in tabular figures so the columns can be scanned down
+ * rather than read across.
+ */
+.table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 5px 6px 5px 0;
+  text-align: right;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.table thead th {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.table th[scope="row"],
+.table thead th:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* The winner in a column, marked by weight and colour, not by a background. */
+.tableBest {
+  color: var(--signal);
+  font-weight: 700;
+}
+
+.tableNote {
+  color: var(--ink-soft);
+  text-align: left !important;
+  font-weight: 400;
+}

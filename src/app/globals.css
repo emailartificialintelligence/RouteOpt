@@ -1,0 +1,176 @@
+/*
+ * The vernacular is dispatch paperwork and transit signage. Hairline rules,
+ * not cards. Flat fills, not shadows. The map is the product, so everything
+ * here is built to stay out of its way.
+ */
+
+:root {
+  --paper: #FBFAF7;
+  --ink: #101B2E;
+  --ink-soft: #55606E;
+  --rule: #D8D3C8;
+  --signal: #0B5D8A;
+  --warn: #B45309;
+
+  /* Derived, kept few. Tints of the named tokens, never new hues. */
+  --paper-sunk: #F4F2ED;
+  --signal-tint: #E7EFF5;
+  --warn-tint: #FBF0E2;
+
+  --rail-width: 360px;
+  --unit: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-hyperlegible), "Atkinson Hyperlegible Next",
+    system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Every number in this interface sits in a column that a dispatcher scans
+ * vertically — stop counts, distances, times. Proportional figures make those
+ * columns ragged, so tabular numerals are the default and not an opt-in.
+ */
+.tabular,
+input,
+table,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* A visible focus ring is not decoration on a tool people use all day. */
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 1px;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--paper);
+}
+
+/*
+ * Motion happens in exactly one place: routes drawing on after a solve.
+ * Anything else that moves is a bug, and this makes that literal.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* MapLibre ships its own chrome. Quiet it down to match the paper. */
+.maplibregl-ctrl-group {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid var(--rule) !important;
+  background: var(--paper) !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--rule) !important;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  background: rgba(251, 250, 247, 0.85) !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--ink-soft) !important;
+}
+
+@media print {
+  /* The manifest is printed and read in a van. Ink is expensive; paper is white. */
+  body {
+    background: #fff;
+  }
+}
+
+/* ------------------------------------------------------------------ markers */
+
+/*
+ * Shape carries the meaning before colour does: the depot is a square, stops
+ * are circles. That survives a colour-blind user, a printed page and a phone in
+ * sunlight, none of which a hue difference survives on its own.
+ */
+.marker {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 2px solid var(--paper);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  user-select: none;
+  /* One flat shadow to lift a pin off a pale basemap. Not a card shadow. */
+  box-shadow: 0 0 0 1px rgba(16, 27, 46, 0.25);
+}
+
+.marker--depot {
+  width: 24px;
+  height: 24px;
+  background: var(--signal);
+  color: var(--paper);
+  border-radius: 2px;
+}
+
+.marker--stop {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Amber is reserved for "a human should look at this", nothing else. */
+.marker--review {
+  background: var(--warn);
+}
+
+.marker--selected {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 5px var(--signal);
+  z-index: 2;
+}
+
+.marker--dragging {
+  cursor: grabbing;
+}
+
+/* While placing, the cursor is the instruction. */
+.map--placing .maplibregl-canvas-container {
+  cursor: crosshair !important;
+}

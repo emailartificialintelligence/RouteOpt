@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "src/app/api/v1/solve/route.ts": { "maxDuration": 30 },
+    "src/app/api/v1/geocode/route.ts": { "maxDuration": 30 },
+    "src/app/api/v1/route-geometry/route.ts": { "maxDuration": 30 }
+  }
+}

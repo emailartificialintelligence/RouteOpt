@@ -1,0 +1,109 @@
+# RoutePlan on a single virtual machine.
+#
+#   caddy   :80/:443  TLS and reverse proxy — the only thing exposed
+#   app     :3000     the Next.js application
+#   sidecar :8081     OR-Tools, reachable only from app
+#   osrm    :5000     road distances, reachable only from app
+#
+# Only Caddy publishes ports. The other three are on an internal network and
+# cannot be reached from the internet — which matters, because neither the
+# sidecar nor OSRM has any authentication and both do real CPU work on
+# unvalidated input.
+#
+# Before the first run:  ./scripts/prepare-osrm.sh <region-url>
+# See DEPLOY.md.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      # Set DOMAIN in .env. Caddy obtains and renews a certificate for it
+      # automatically; the only requirement is that the DNS record points here.
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env, e.g. routes.example.com}
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [edge, internal]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+      # Caddy terminates TLS and forwards, so x-forwarded-for is trustworthy
+      # here and only here. Never set this without a proxy in front: the header
+      # is trivially spoofed and would hand every caller an unlimited quota.
+      TRUST_PROXY: "true"
+
+      # Service names on the internal network, not localhost.
+      OSRM_BASE_URL: http://osrm:5000
+      ORTOOLS_URL: http://sidecar:8081
+
+      # Photon has no per-second limit and needs no key. Nominatim's public
+      # instance will block a deployment that leans on it.
+      GEOCODER_PROVIDER: ${GEOCODER_PROVIDER:-photon}
+      GEOCODER_USER_AGENT: ${GEOCODER_USER_AGENT:?set a real contact address or project URL}
+      GEOCODER_BASE_URL: ${GEOCODER_BASE_URL:-https://photon.komoot.io}
+
+      RATE_LIMIT_SOLVE: ${RATE_LIMIT_SOLVE:-20}
+      RATE_LIMIT_GEOCODE: ${RATE_LIMIT_GEOCODE:-60}
+    depends_on:
+      osrm:
+        condition: service_healthy
+    networks: [internal]
+
+  sidecar:
+    build:
+      context: ./sidecar
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # OR-Tools will use everything it is given. Capping it stops one expensive
+    # plan from starving the web app on a small VM.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1g
+    networks: [internal]
+
+  osrm:
+    image: osrm/osrm-backend:latest
+    restart: unless-stopped
+    command: >
+      osrm-routed --algorithm mld
+      --max-table-size ${OSRM_MAX_TABLE_SIZE:-1000}
+      --max-matching-size 100
+      /data/${OSRM_REGION:-region}.osrm
+    volumes:
+      - ./osrm-data:/data:ro
+    # The public demo caps tables at 100 coordinates, which is why MAX_STOPS is
+    # 99. Self-hosting lifts that: raise OSRM_MAX_TABLE_SIZE here and MAX_STOPS
+    # in src/lib/schema.ts together, and remember a table is N squared work.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 'http://127.0.0.1:5000/route/v1/driving/0,0;1,1?overview=false' >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    networks: [internal]
+
+networks:
+  # Only Caddy sits on both. Everything else is unreachable from outside.
+  edge:
+  internal:
+    internal: true
+
+volumes:
+  caddy-data:
+  caddy-config:
