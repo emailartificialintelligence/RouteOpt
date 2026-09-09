@@ -54,7 +54,17 @@ function connectSources(): string[] {
 }
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  /*
+   * Web Crypto and btoa, not Buffer.
+   *
+   * Middleware runs in the Edge runtime on Vercel, where Buffer is a Node API
+   * that is not guaranteed to exist. A throw here means no nonce header and no
+   * CSP — the policy silently stops applying, which is the worst possible
+   * failure for a security header because nothing looks wrong.
+   */
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const nonce = btoa(String.fromCharCode(...bytes));
 
   const csp = [
     "default-src 'self'",
