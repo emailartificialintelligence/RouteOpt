@@ -1,7 +1,8 @@
-# Turning on the Balanced engine
+# Turning on the Balanced, Best quality and VRoom engines
 
-Vercel runs JavaScript. OR-Tools is C++ with Python bindings, so it runs
-somewhere else and the app talks to it over HTTPS.
+Vercel runs JavaScript. OR-Tools, PyVRP and VROOM are all C++ with Python
+bindings, so they run somewhere else — all three in one service — and the app
+talks to it over HTTPS.
 
 This guide uses **Google Cloud Run**, which is free for a tool at this scale:
 the container sleeps when nobody is planning, and you are not billed while it
@@ -9,7 +10,8 @@ sleeps. Waking takes a few seconds, which the app tolerates.
 
 **Time:** about 15 minutes. **Cost:** nothing, within the free allowance.
 
-No code changes — the app enables the engine when it sees `ORTOOLS_URL`.
+No code changes — the app enables all three when it sees `ORTOOLS_URL`
+(or `SIDECAR_URL`, which is the name that describes what it now is).
 
 ---
 
@@ -60,8 +62,17 @@ time, so an existing deployment will not pick them up.
 curl https://your-app.vercel.app/api/health
 ```
 
-You want `"ortools": true`. In the app, **Balanced** is now selectable and
-**Compare engines** shows both.
+You want `"ortools"`, `"pyvrp"` and `"vroom"` all `true`. In the app,
+**Balanced**, **Best quality** and **VRoom** become selectable and **Compare
+engines** shows all four.
+
+The solver service has its own health endpoint that reports which engines
+actually loaded in that image, which is the difference between "redeploy the
+sidecar" and an afternoon spent looking at the app:
+
+```bash
+curl https://YOUR-SERVICE.run.app/health
+```
 
 ---
 
@@ -72,7 +83,7 @@ The deploy script is tuned to stay free and to fail safely:
 | Setting | Why |
 |---|---|
 | `--min-instances 0` | Sleeps when idle, so idle costs nothing. This is the whole reason it is free. |
-| `--cpu 1 --memory 512Mi` | OR-Tools imports in under half a second and these problems are small. More costs more per second and solves no faster. |
+| `--cpu 1 --memory 512Mi` | All three engines loaded is 144MB idle and 148MB peak on a 99-stop solve, so this has plenty of headroom. More costs more per second and solves no faster. |
 | `--concurrency 2` | A solve pins a core. More requests on one instance make each slower rather than serving more. |
 | `ORTOOLS_MAX_BUDGET_MS=5000` | Caps how long any single solve may run, whatever the app asks for. Bounds both your bill and the wait. |
 | `ORTOOLS_TOKEN` | The service is reachable from the internet and spends CPU on any request. Without a token it is free compute for whoever finds it. |
@@ -85,7 +96,7 @@ costing a few dollars a month. That is the only real trade here.
 
 ## If it does not work
 
-**`"ortools": false` after redeploying.** `ORTOOLS_URL` missing or empty. An
+**An engine shows `false` after redeploying.** `ORTOOLS_URL` missing or empty. An
 empty variable counts as unset.
 
 **"rejected our credentials".** `ORTOOLS_TOKEN` differs between Cloud Run and
