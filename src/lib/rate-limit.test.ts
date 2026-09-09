@@ -113,3 +113,28 @@ describe("rateLimitHeaders", () => {
     expect(headers["Retry-After"]).toBe("30");
   });
 });
+
+describe("misconfiguration", () => {
+  it("refuses consistently when a limit is zero, not once then never", () => {
+    /*
+     * The first request in a window used to be allowed unconditionally. With a
+     * limit of 0 that meant one request succeeded and everything after it was
+     * refused — which looks like a random "too many requests" on a page the
+     * user has only just opened.
+     */
+    const zero = { limit: 0, windowMs: 60_000 };
+    const now = 2_000_000;
+    expect(checkRateLimit("z", zero, now).allowed).toBe(false);
+    expect(checkRateLimit("z", zero, now).allowed).toBe(false);
+  });
+
+  it("never reports negative remaining, even misconfigured", () => {
+    const result = checkRateLimit("z2", { limit: 0, windowMs: 60_000 }, 3_000_000);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("gives a blocked caller a real Retry-After on the first request", () => {
+    const result = checkRateLimit("z3", { limit: 0, windowMs: 60_000 }, 4_000_000);
+    expect(result.retryAfterSeconds).toBeGreaterThanOrEqual(1);
+  });
+});

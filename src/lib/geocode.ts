@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { MAX_QUERIES_PER_REQUEST } from "./limits";
+import { envNumber, envString, envUrl } from "./env";
 
 /**
  * Address to coordinate.
@@ -41,8 +42,12 @@ const DEFAULT_BASE_URL: Record<GeocoderProvider, string> = {
   photon: "https://photon.komoot.io",
 };
 
-const GEOCODER_BASE_URL =
-  process.env.GEOCODER_BASE_URL ?? DEFAULT_BASE_URL[GEOCODER_PROVIDER];
+// envUrl, not ??: a blank GEOCODER_BASE_URL makes new URL() throw on every
+// single lookup, which surfaces only as "Lookup failed" for every address.
+const GEOCODER_BASE_URL = envUrl(
+  process.env.GEOCODER_BASE_URL,
+  DEFAULT_BASE_URL[GEOCODER_PROVIDER],
+);
 /*
  * Nominatim rejects requests it cannot attribute, and it rejects obvious
  * placeholders outright — an unset default returns 403 on the very first
@@ -50,10 +55,11 @@ const GEOCODER_BASE_URL =
  * URL is a valid contact under the usage policy, so the default identifies the
  * project rather than pretending to be a person.
  */
-const GEOCODER_USER_AGENT =
-  process.env.GEOCODER_USER_AGENT ??
-  "RoutePlan/0.1 (+https://github.com/routeplan/routeplan)";
-const GEOCODER_TIMEOUT_MS = Number(process.env.GEOCODER_TIMEOUT_MS ?? 8000);
+const GEOCODER_USER_AGENT = envString(
+  process.env.GEOCODER_USER_AGENT,
+  "RoutePlan/0.1 (+https://github.com/routeplan/routeplan)",
+);
+const GEOCODER_TIMEOUT_MS = envNumber(process.env.GEOCODER_TIMEOUT_MS, 8000);
 
 /** Nominatim's published rate limit. Not a suggestion. */
 /*
@@ -61,8 +67,9 @@ const GEOCODER_TIMEOUT_MS = Number(process.env.GEOCODER_TIMEOUT_MS ?? 8000);
  * no equivalent rule, so the default drops to something polite rather than
  * punitive — the difference is 44 seconds versus 4 on a 40-address paste.
  */
-const MIN_REQUEST_SPACING_MS = Number(
-  process.env.GEOCODER_SPACING_MS ?? (GEOCODER_PROVIDER === "photon" ? 100 : 1100),
+const MIN_REQUEST_SPACING_MS = envNumber(
+  process.env.GEOCODER_SPACING_MS,
+  GEOCODER_PROVIDER === "photon" ? 100 : 1100,
 );
 
 

@@ -2,14 +2,15 @@ import type { SolverName } from "../schema";
 import { greedySolver } from "./greedy";
 import { createOrToolsSolver, httpTransport } from "./ortools";
 import { SolverError, type Solver } from "./types";
+import { envNumber, envString } from "../env";
 
 /*
  * OR-Tools runs in a sidecar process (sidecar/solver.py). It is only offered
  * when one is configured: an engine listed as available that then fails on
  * every request is worse than one honestly marked as not set up.
  */
-const ORTOOLS_URL = process.env.ORTOOLS_URL ?? "";
-const ORTOOLS_TIMEOUT_MS = Number(process.env.ORTOOLS_TIMEOUT_MS ?? 30_000);
+const ORTOOLS_URL = envString(process.env.ORTOOLS_URL, "");
+const ORTOOLS_TIMEOUT_MS = envNumber(process.env.ORTOOLS_TIMEOUT_MS, 30_000);
 
 /**
  * Adding an engine is a file plus an entry here. Nothing else changes.

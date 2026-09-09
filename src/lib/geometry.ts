@@ -18,9 +18,13 @@
  */
 
 // Same service as the distance matrix; see matrix.ts for the self-hosting note.
-const OSRM_BASE_URL =
-  process.env.OSRM_BASE_URL ?? "https://router.project-osrm.org";
-const OSRM_TIMEOUT_MS = Number(process.env.OSRM_TIMEOUT_MS ?? 8000);
+import { envNumber, envUrl } from "./env";
+
+const OSRM_BASE_URL = envUrl(
+  process.env.OSRM_BASE_URL,
+  "https://router.project-osrm.org",
+);
+const OSRM_TIMEOUT_MS = envNumber(process.env.OSRM_TIMEOUT_MS, 8000);
 
 /** The public demo server will not route through more points than this. */
 export const MAX_GEOMETRY_COORDINATES = 100;

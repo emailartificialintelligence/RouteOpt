@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Coordinate, Problem } from "./schema";
+import { envNumber, envUrl } from "./env";
 import { haversine } from "./solver/greedy";
 import type { Matrix } from "./solver/types";
 
@@ -12,9 +13,14 @@ import type { Matrix } from "./solver/types";
  *   docker run -p 5000:5000 osrm/osrm-backend osrm-routed --algorithm mld /data/region.osrm
  * then set OSRM_BASE_URL=http://localhost:5000
  */
-const OSRM_BASE_URL =
-  process.env.OSRM_BASE_URL ?? "https://router.project-osrm.org";
-const OSRM_TIMEOUT_MS = Number(process.env.OSRM_TIMEOUT_MS ?? 8000);
+// envUrl/envNumber rather than ??: a hosting dashboard stores a blank variable
+// as "", which `??` passes through — giving an unparseable base URL or a zero
+// timeout, and failing only once deployed.
+const OSRM_BASE_URL = envUrl(
+  process.env.OSRM_BASE_URL,
+  "https://router.project-osrm.org",
+);
+const OSRM_TIMEOUT_MS = envNumber(process.env.OSRM_TIMEOUT_MS, 8000);
 
 /** Public demo servers cap the table endpoint here. */
 const OSRM_TABLE_LIMIT = 100;

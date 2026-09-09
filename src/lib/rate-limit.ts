@@ -24,6 +24,8 @@
  * as defence in depth. See VERCEL.md.
  */
 
+import { envBool, envNumber } from "./env";
+
 export interface RateLimitRule {
   /** Requests permitted per window. */
   limit: number;
@@ -80,12 +82,17 @@ export function checkRateLimit(
   if (!existing || existing.resetAt <= now) {
     const resetAt = now + rule.windowMs;
     windows.set(key, { count: 1, resetAt });
+    // Check the limit even on the first request of a window. Returning
+    // allowed:true unconditionally here let a misconfigured limit of 0 through
+    // once — and then refuse everything after it, which reads as a random
+    // "too many requests" on a page nobody had used yet.
+    const allowed = rule.limit >= 1;
     return {
-      allowed: true,
+      allowed,
       limit: rule.limit,
-      remaining: rule.limit - 1,
+      remaining: Math.max(0, rule.limit - 1),
       resetAt,
-      retryAfterSeconds: 0,
+      retryAfterSeconds: allowed ? 0 : Math.ceil(rule.windowMs / 1000),
     };
   }
 
@@ -117,7 +124,7 @@ export function resetRateLimits(): void {
  * unconditionally hands anyone an unlimited quota by sending a random header.
  * Trust it only when the deployment says there really is a proxy in front.
  */
-const TRUST_PROXY = process.env.TRUST_PROXY === "true";
+const TRUST_PROXY = envBool(process.env.TRUST_PROXY);
 
 /**
  * Identify the caller.
@@ -147,15 +154,28 @@ const seconds = (n: number) => n * 1000;
  * Limits are per IP per minute, set to be invisible to a dispatcher planning a
  * round and obstructive to a script.
  */
+/**
+ * Read a limit from the environment, falling back on anything unusable.
+ *
+ * `?? fallback` is not enough. A hosting dashboard will happily store an
+ * environment variable as an empty string, and `Number("")` is 0 — which turns
+ * a generous limit into "refuse everything" without any error, on a deployment
+ * that worked locally. Undefined, empty, non-numeric and non-positive all mean
+ * "the operator did not set this", so all of them take the default.
+ */
+function limitFromEnv(raw: string | undefined, fallback: number): number {
+  return Math.floor(envNumber(raw, fallback));
+}
+
 export const RATE_LIMITS = {
   /** Builds a matrix and runs a solver. The expensive one. */
-  solve: { limit: Number(process.env.RATE_LIMIT_SOLVE ?? 20), windowMs: seconds(60) },
-  /** Throttled to 1/sec upstream anyway; this stops one client monopolising it. */
-  geocode: { limit: Number(process.env.RATE_LIMIT_GEOCODE ?? 60), windowMs: seconds(60) },
+  solve: { limit: limitFromEnv(process.env.RATE_LIMIT_SOLVE, 20), windowMs: seconds(60) },
+  /** Throttled upstream anyway; this stops one client monopolising it. */
+  geocode: { limit: limitFromEnv(process.env.RATE_LIMIT_GEOCODE, 60), windowMs: seconds(60) },
   /** Cheap, but it is a third-party call we are paying for. */
-  geometry: { limit: Number(process.env.RATE_LIMIT_GEOMETRY ?? 60), windowMs: seconds(60) },
+  geometry: { limit: limitFromEnv(process.env.RATE_LIMIT_GEOMETRY, 60), windowMs: seconds(60) },
   /** Pure computation, no third party. Generous. */
-  share: { limit: Number(process.env.RATE_LIMIT_SHARE ?? 60), windowMs: seconds(60) },
+  share: { limit: limitFromEnv(process.env.RATE_LIMIT_SHARE, 60), windowMs: seconds(60) },
 } satisfies Record<string, RateLimitRule>;
 
 export interface RateLimitHeaders {
