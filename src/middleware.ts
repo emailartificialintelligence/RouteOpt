@@ -84,6 +84,13 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
+/*
+ * Note for anyone adding a page: a nonce-based CSP requires the page to be
+ * rendered per request. A statically prerendered page has no nonce and every
+ * script on it will be blocked — a blank screen in production that development
+ * never reproduces. Add `export const dynamic = "force-dynamic"` to any new
+ * page, or move to a hash-based policy.
+ */
 export const config = {
   /*
    * Skip static assets and image optimisation: they are not documents, they
