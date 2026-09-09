@@ -11,7 +11,7 @@ export function SiteFooter() {
         <div className={styles.footerLinks}>
           <Link href="/how-it-works">How it works</Link>
           <Link href="/algorithms">Algorithms</Link>
-          <Link href="/api">API</Link>
+          <Link href="/api-docs">API</Link>
           <Link href="/about">About</Link>
           <a
             href="https://github.com/emailartificialintelligence/RouteOpt"

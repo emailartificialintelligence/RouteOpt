@@ -15,7 +15,7 @@ import styles from "./site.module.css";
 const LINKS = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/algorithms", label: "Algorithms" },
-  { href: "/api", label: "API" },
+  { href: "/api-docs", label: "API" },
   { href: "/about", label: "About" },
 ] as const;
 

@@ -392,3 +392,97 @@
   color: var(--ink);
   font-weight: 600;
 }
+
+/* ------------------------------------------------------------------ panels */
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin: 20px 0 8px;
+}
+
+.panel {
+  margin: 0;
+}
+
+.panelSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.panelCaption {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.panelCaption strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------- table */
+
+.table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 7px 10px 7px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+.table thead th {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.table td:not(:first-child),
+.table th:not(:first-child) {
+  text-align: right;
+}
+
+/* --------------------------------------------------------------- code block */
+
+.code {
+  margin: 14px 0;
+  padding: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-sunk);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+/* A note that is worth pausing on, without shouting. */
+.aside {
+  margin: 18px 0;
+  padding: 12px 14px;
+  border-left: 2px solid var(--signal);
+  background: var(--signal-tint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.asideWarn {
+  composes: aside;
+  border-left-color: var(--warn);
+  background: var(--warn-tint);
+}

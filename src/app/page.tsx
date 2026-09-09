@@ -142,7 +142,7 @@ export default function LandingPage() {
             no account.
           </p>
           <div className={styles.heroActions} style={{ marginTop: 18 }}>
-            <Link href="/api" className={styles.ctaGhost}>
+            <Link href="/api-docs" className={styles.ctaGhost}>
               Read the API docs
             </Link>
             <Link href="/algorithms" className={styles.ctaGhost}>
