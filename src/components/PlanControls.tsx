@@ -160,6 +160,14 @@ export function PlanControls({
         {solving ? "Planning…" : "Plan routes"}
       </button>
 
+      {/* A shortcut nobody is told about is a shortcut nobody uses. */}
+      {canSolve && !solving && (
+        <p className={styles.hint} style={{ textAlign: "center" }}>
+          or press <kbd className={styles.key}>⌘</kbd>{" "}
+          <kbd className={styles.key}>Enter</kbd>
+        </p>
+      )}
+
       {!canSolve && blockingReasons.length > 0 && (
         <ul className={styles.blocking}>
           {blockingReasons.map((reason) => (

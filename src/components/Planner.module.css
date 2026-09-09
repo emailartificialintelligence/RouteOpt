@@ -787,3 +787,23 @@
   text-align: left !important;
   font-weight: 400;
 }
+
+/*
+ * A key, drawn like a key. Small, quiet, obviously a keyboard thing.
+ *
+ * A class rather than a bare `kbd` selector: CSS Modules rejects element
+ * selectors with no local class, because they would leak out of the module.
+ */
+.key {
+  display: inline-block;
+  min-width: 15px;
+  padding: 1px 4px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--paper);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}

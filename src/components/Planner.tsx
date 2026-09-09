@@ -31,6 +31,7 @@ import {
   type Draft,
   type DraftStop,
 } from "@/lib/plan";
+import { DEMO_DRAFT } from "@/lib/demo";
 import { StopList } from "./StopList";
 import { PlanControls } from "./PlanControls";
 import { RouteSummary } from "./RouteSummary";
@@ -87,6 +88,16 @@ export function Planner() {
   const [fitRequest, setFitRequest] = useState(0);
   const requestFit = useCallback(() => setFitRequest((n) => n + 1), []);
   const [copied, setCopied] = useState(false);
+  /*
+   * One level of undo for the destructive actions.
+   *
+   * Clear wipes a round somebody may have spent minutes pasting and correcting,
+   * and there is no database to recover it from — the work exists only in this
+   * tab. A confirmation dialog would ask about every deletion including the
+   * trivial ones; an undo asks about none and still saves the expensive
+   * mistake.
+   */
+  const [undo, setUndo] = useState<{ draft: Draft; label: string } | null>(null);
 
   const summary = useMemo(() => summarise(draft), [draft]);
 
@@ -404,19 +415,68 @@ export function Planner() {
   }, []);
 
   const handleRemove = useCallback((id: string) => {
-    setDraft((current) => ({
-      ...current,
-      stops: current.stops.filter((s) => s.id !== id),
-    }));
+    setDraft((current) => {
+      setUndo({ draft: current, label: "Stop removed" });
+      return { ...current, stops: current.stops.filter((s) => s.id !== id) };
+    });
     setSelectedStopId((current) => (current === id ? null : current));
   }, []);
 
   const clearAll = useCallback(() => {
-    setDraft(emptyDraft());
+    setDraft((current) => {
+      setUndo({ draft: current, label: "Plan cleared" });
+      return emptyDraft();
+    });
     setSelectedStopId(null);
     setIssues([]);
     setError(null);
   }, []);
+
+  const undoLast = useCallback(() => {
+    if (!undo) return;
+    setDraft(undo.draft);
+    setUndo(null);
+  }, [undo]);
+
+  /** Load the worked example, so an empty screen has something to show. */
+  const loadDemo = useCallback(() => {
+    setDraft((current) => {
+      if (current.stops.length > 0) {
+        setUndo({ draft: current, label: "Example loaded" });
+      }
+      return DEMO_DRAFT;
+    });
+    setIssues([]);
+    setError(null);
+    requestFit();
+  }, [requestFit]);
+
+  /*
+   * Cmd+Enter is the one shortcut worth having.
+   *
+   * In the textarea it adds the stops; anywhere else it plans. A plain Enter
+   * cannot do either — the textarea needs it for newlines, which is the whole
+   * point of pasting a list.
+   */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;
+      const inTextarea =
+        (event.target as HTMLElement | null)?.tagName === "TEXTAREA";
+
+      if (inTextarea && pasteText.trim() !== "") {
+        event.preventDefault();
+        addFromText(pasteText);
+        return;
+      }
+      if (!inTextarea && summary.canSolve && !solving) {
+        event.preventDefault();
+        void solve();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pasteText, addFromText, summary.canSolve, solving, solve]);
 
   /* ------------------------------------------------------------------ view */
 
@@ -578,6 +638,34 @@ export function Planner() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/*
+          * An empty screen asks the visitor to supply data before it will show
+          * them anything. One click puts a real round on the map instead.
+          */}
+        {summary.total === 0 && (
+          <div className={styles.section}>
+            <p className={styles.hint} style={{ marginTop: 0 }}>
+              Not sure yet? Load a worked example: twelve stops across Paris,
+              ready to plan.
+            </p>
+            <div className={styles.actions}>
+              <button type="button" className={styles.secondary} onClick={loadDemo}>
+                Load an example
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------- undo -- */}
+        {undo && (
+          <div className={styles.progress} role="status">
+            {undo.label}.{" "}
+            <button type="button" className={styles.linkButton} onClick={undoLast}>
+              Undo
+            </button>
           </div>
         )}
 
