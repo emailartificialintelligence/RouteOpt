@@ -129,18 +129,23 @@ export default function AlgorithmsPage() {
           routes stops trusting it — even when both are equally good.
         </div>
 
-        <h2>The second engine: OR-Tools</h2>
+        <h2>The other three engines</h2>
         <p>
-          The built-in engine is a heuristic that returns in milliseconds.
-          Google&apos;s OR-Tools takes a different approach: build a first
-          solution, then spend a fixed time budget on guided local search,
-          escaping local optima by penalising features that keep reappearing in
-          bad solutions.
+          The built-in engine is a heuristic that returns in milliseconds. The
+          other three take a different approach: build a first solution, then
+          spend a time budget improving it — OR-Tools with guided local search,
+          PyVRP with a genetic algorithm, VROOM with its own local search.
         </p>
         <p>
-          It runs as a separate process, because OR-Tools is a C++ library with
-          Python bindings and no usable JavaScript build. Measured on the same
-          forty stops and three vans, with real road distances:
+          All three run in a separate process, because all three are C++
+          libraries with Python bindings and no usable JavaScript build. They
+          share one service, so choosing between them is a dropdown rather than
+          a deployment.
+        </p>
+        <p>
+          Measured on forty stops and three vans, with real road distances.
+          Visiting those forty stops in the order they were pasted is 344&nbsp;km,
+          which is the number every row below is an improvement on.
         </p>
 
         <table className={styles.table}>
@@ -158,48 +163,95 @@ export default function AlgorithmsPage() {
             <tr>
               <td>Fast</td>
               <td>even workload</td>
-              <td>90.0 km</td>
-              <td>32.1 km</td>
+              <td>101.4 km</td>
+              <td>36.5 km</td>
               <td>3</td>
-              <td>7 ms</td>
+              <td>12 ms</td>
             </tr>
             <tr>
               <td>Fast</td>
               <td>shortest total</td>
-              <td>90.9 km</td>
-              <td>35.6 km</td>
+              <td>92.1 km</td>
+              <td>37.1 km</td>
               <td>3</td>
-              <td>2 ms</td>
+              <td>8 ms</td>
             </tr>
             <tr>
               <td>Balanced</td>
               <td>even workload</td>
-              <td>90.6 km</td>
-              <td>30.3 km</td>
+              <td>97.7 km</td>
+              <td>33.6 km</td>
               <td>3</td>
-              <td>5.0 s</td>
+              <td>5.2 s</td>
             </tr>
             <tr>
               <td>Balanced</td>
               <td>shortest total</td>
-              <td>76.0 km</td>
-              <td>76.0 km</td>
+              <td>78.8 km</td>
+              <td>78.8 km</td>
               <td>1</td>
-              <td>5.0 s</td>
+              <td>5.2 s</td>
+            </tr>
+            <tr>
+              <td>Best quality</td>
+              <td>even workload</td>
+              <td>92.6 km</td>
+              <td>32.0 km</td>
+              <td>3</td>
+              <td>9.2 s</td>
+            </tr>
+            <tr>
+              <td>Best quality</td>
+              <td>shortest total</td>
+              <td>77.9 km</td>
+              <td>77.9 km</td>
+              <td>1</td>
+              <td>9.1 s</td>
+            </tr>
+            <tr>
+              <td>VRoom</td>
+              <td>even workload</td>
+              <td>92.6 km</td>
+              <td>32.0 km</td>
+              <td>3</td>
+              <td>1.7 s</td>
+            </tr>
+            <tr>
+              <td>VRoom</td>
+              <td>shortest total</td>
+              <td>77.9 km</td>
+              <td>77.9 km</td>
+              <td>1</td>
+              <td>239 ms</td>
             </tr>
           </tbody>
         </table>
 
         <p>
-          Read the last row carefully. Asked for the shortest total, OR-Tools
-          found a 76 km answer the fast engine cannot see — 16% better — by
-          putting every stop on one van and leaving two idle. That is the
+          Three things in that table are worth reading slowly.
+        </p>
+        <p>
+          <strong>The single-van rows are not a bug.</strong> Asked for the
+          shortest total, three of the four engines put every stop on one van
+          and leave two idle. That genuinely is the shortest total — a second
+          van means a second trip out to the round and back — and it is the
           correct answer to the question asked. Whether it is the answer you
           wanted is why the objective is a control and not a default.
         </p>
         <p>
-          For comparison, visiting those forty stops in the order they were
-          pasted is 266 km.
+          <strong>VRoom and Best quality returned identical plans</strong>, and
+          VRoom did it between five and thirty-eight times faster. Two engines
+          agreeing to the metre is not suspicious here — on a problem this size
+          they are both reaching the same answer, and the gap is in how long
+          they take to be sure of it.
+        </p>
+        <p>
+          <strong>Balanced is beaten on its own objective.</strong> OR-Tools is
+          the only one of the three with a real min-max objective, and it still
+          finishes third on <em>even workload</em>: 33.6&nbsp;km against
+          32.0&nbsp;km. Optimising the right objective directly does not
+          guarantee a better answer than approximating it with a stronger
+          underlying search. The next section is about why.
         </p>
 
         <h2>The engines</h2>
@@ -249,8 +301,8 @@ export default function AlgorithmsPage() {
               </td>
               <td style={{ textAlign: "left" }}>
                 Google OR-Tools with guided local search, in a Python process
-                beside the app. Found 16% shorter routes on the test above, and
-                took about a thousand times longer to do it.
+                beside the app. The only engine here with a real min-max
+                objective, which is what &ldquo;even workload&rdquo; asks for.
               </td>
             </tr>
             <tr>
@@ -280,9 +332,10 @@ export default function AlgorithmsPage() {
                 Needs <code>SIDECAR_URL</code>.
               </td>
               <td style={{ textAlign: "left" }}>
-                A lightweight open-source engine. On a 40-stop test it matched
-                OR-Tools&rsquo; balanced plan to within 7% while returning in
-                281ms rather than four seconds.
+                A lightweight open-source engine, and the surprise of the
+                benchmark above: identical plans to PyVRP on both objectives,
+                between five and thirty-eight times faster, and better than
+                OR-Tools on both.
               </td>
             </tr>
           </tbody>
@@ -307,15 +360,25 @@ export default function AlgorithmsPage() {
           Both accept a per-vehicle distance cap, so minimising the longest route
           becomes a search for the smallest cap that still admits a plan — a
           binary search bounded below by a perfectly even split and above by the
-          uncapped answer. Four probes gets within a few percent. On that same
-          40-stop test it takes the worst route from 144&nbsp;km down to
-          103&nbsp;km, against OR-Tools&rsquo; 96&nbsp;km.
+          uncapped answer. Four probes gets within a few percent, at the price of
+          four solves instead of one.
         </p>
         <p>
-          This matters when reading the comparison table: on &ldquo;even
-          workload&rdquo; OR-Tools is solving the objective, and the other two
-          are approximating it. On &ldquo;shortest total&rdquo; all three are
-          solving the same problem, and the numbers are directly comparable.
+          That price is why VROOM takes 1.7&nbsp;s on <em>even workload</em> and
+          239&nbsp;ms on <em>shortest total</em> in the table above. It is not a
+          slower engine on the harder objective; it is the same engine run
+          several times.
+        </p>
+        <p>
+          The surprise is that the approximation wins. OR-Tools optimises the
+          real min-max objective and lands on 33.6&nbsp;km; the two engines
+          bolting a cap search onto a min-sum solver land on 32.0&nbsp;km. A
+          span cost is the more principled formulation, but it is solved by a
+          weaker search than PyVRP&rsquo;s genetic algorithm, and on this
+          instance the search matters more than the formulation. That is worth
+          knowing rather than smoothing over: it is a result about these
+          engines on this problem size, not a general claim about either
+          technique.
         </p>
 
         <div className={styles.aside}>
