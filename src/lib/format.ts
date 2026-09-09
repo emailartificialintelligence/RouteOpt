@@ -38,6 +38,28 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * How long an engine took.
+ *
+ * Deliberately not formatDuration. That one describes a *journey*, where "under
+ * a minute" is exactly right — a driver does not care whether a leg is 40 or 50
+ * seconds. Solve time lives in the opposite register: the whole interesting
+ * range is 200ms to 10s, and "under a minute" flattens all of it into one
+ * useless phrase that reads as "this might take a minute" next to an engine
+ * reporting "0 ms".
+ */
+export function formatSolveTime(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  if (ms < 60_000) {
+    const seconds = ms / 1000;
+    // One decimal up to 10s, where the difference between 5.1 and 5.8 is the
+    // thing being compared; past that it is noise.
+    return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`;
+  }
+  return formatDuration(ms / 1000);
+}
+
+/**
  * A clock time, given an offset from departure.
  * Routes are planned as offsets so the plan survives being made the night
  * before; this renders them against whatever start the user is looking at.

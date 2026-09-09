@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { ApiError, solveProblem, type SolverInfo } from "@/lib/api-client";
-import { formatDistance, formatDuration, pluralise } from "@/lib/format";
+import { formatDistance, formatSolveTime, pluralise } from "@/lib/format";
 import type { Problem, Solution } from "@/lib/schema";
 import styles from "./Planner.module.css";
 
@@ -163,9 +163,7 @@ export function EngineComparison({ problem, solvers }: EngineComparisonProps) {
                   </td>
                   <td data-numeric>{s.summary.vehiclesUsed}</td>
                   <td className={cell(s.meta.solveTimeMs, bestTime)} data-numeric>
-                    {s.meta.solveTimeMs < 1000
-                      ? `${s.meta.solveTimeMs} ms`
-                      : formatDuration(s.meta.solveTimeMs / 1000)}
+                    {formatSolveTime(s.meta.solveTimeMs)}
                   </td>
                 </tr>
               );

@@ -34,9 +34,6 @@ if ! command -v gcloud >/dev/null; then
   exit 1
 fi
 
-# A shared secret, so the endpoint is not free CPU for the whole internet.
-TOKEN="${ORTOOLS_TOKEN:-$(openssl rand -hex 32)}"
-
 echo "==> project $PROJECT, region $REGION, service $SERVICE"
 
 gcloud config set project "$PROJECT" >/dev/null
@@ -62,6 +59,30 @@ if ! gcloud projects get-iam-policy "$PROJECT" \
     --condition=None --quiet >/dev/null
 fi
 
+# A shared secret, so the endpoint is not free CPU for the whole internet.
+#
+# Reused from the running service when there is one. Minting a fresh token on
+# every deploy would rotate it out from under the app, which has the old one in
+# its own environment: the sidecar would come back healthy and every solve would
+# fail with 401, on a change that touched neither.
+EXISTING_TOKEN="$(gcloud run services describe "$SERVICE" --region "$REGION" \
+  --format=json 2>/dev/null | python3 -c "
+import json, sys
+try:
+    spec = json.load(sys.stdin)['spec']['template']['spec']['containers'][0]
+except Exception:
+    raise SystemExit
+for entry in spec.get('env', []):
+    if entry.get('name') in ('ORTOOLS_TOKEN', 'SIDECAR_TOKEN') and entry.get('value'):
+        print(entry['value'])
+        break" 2>/dev/null || true)"
+
+TOKEN="${ORTOOLS_TOKEN:-${EXISTING_TOKEN:-$(openssl rand -hex 32)}}"
+
+if [[ -n "$EXISTING_TOKEN" && "$TOKEN" == "$EXISTING_TOKEN" ]]; then
+  echo "==> reusing the existing token (your app's config keeps working)"
+fi
+
 echo "==> building and deploying (first run takes a few minutes)"
 gcloud run deploy "$SERVICE" \
   --source sidecar \
@@ -74,7 +95,7 @@ gcloud run deploy "$SERVICE" \
   --memory 512Mi \
   --concurrency 2 \
   --timeout 60s \
-  --set-env-vars "ORTOOLS_HOST=0.0.0.0,ORTOOLS_TOKEN=$TOKEN,ORTOOLS_MAX_BUDGET_MS=5000" \
+  --set-env-vars "ORTOOLS_HOST=0.0.0.0,ORTOOLS_TOKEN=$TOKEN,SIDECAR_MAX_BUDGET_MS=15000" \
   --quiet
 
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')"
@@ -88,6 +109,16 @@ echo
 echo "        ORTOOLS_URL=$URL"
 echo "        ORTOOLS_TOKEN=$TOKEN"
 echo
-echo "    Check it is alive:"
-echo "        curl $URL/health"
+echo "    Engines this build is serving:"
+curl -s -m 30 "$URL/health" | python3 -c \
+  "import json,sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print('        (health check did not return JSON — try curl $URL/health)'); raise SystemExit
+for name, ok in sorted(d.get('engines', {}).items()):
+    print('        %-9s %s' % (name, 'yes' if ok else 'NO'))
+for name, err in d.get('unavailable', {}).items():
+    print('        %s failed to import: %s' % (name, err))" 2>/dev/null \
+  || echo "        (could not reach $URL/health)"
 echo

@@ -1,0 +1,15 @@
+# Pinned deliberately.
+#
+# These engines decide delivery routes. A solver quietly changing its search
+# behaviour between deploys is not something anyone wants to debug from a
+# driver's phone call, so versions move when someone chooses to move them.
+
+# Guided local search. The "Balanced" engine.
+ortools==9.15.6755
+
+# Hybrid genetic search. The "Best quality" engine. Pulls numpy.
+pyvrp==0.14.0
+
+# Python bindings for VROOM, with the C++ engine bundled as an extension
+# module. This is why VROOM does not need a container of its own.
+pyvroom==1.15.2

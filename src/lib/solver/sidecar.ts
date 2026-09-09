@@ -1,28 +1,33 @@
-import type { Problem, Solution } from "../schema";
+import type { Problem, Solution, SolverName } from "../schema";
 import { SolverError, type Matrix, type Solver } from "./types";
 import { assembleSolution, assertServesEveryStop, type VehicleOrder } from "./assemble";
 
 /**
- * Google OR-Tools, via a sidecar process.
+ * Engines that run in the sidecar process.
  *
- * OR-Tools is a C++ library with Python bindings and no usable JavaScript
- * build, so the engine itself runs beside the app (see sidecar/solver.py) and
- * this module speaks to it.
+ * OR-Tools, PyVRP and VROOM are all C++ libraries with Python bindings and no
+ * usable JavaScript build, so they run beside the app (see sidecar/solver.py)
+ * and this module speaks to them. One transport, one protocol, three engines:
+ * they differ only in which solver the sidecar reaches for.
  *
  * That collides with the rule that solvers are pure and never touch the
  * network, so the collision is confined rather than spread: everything here is
- * a pure function except one injected transport. Request building and response
- * mapping — the parts that can actually be wrong — are exported and tested
- * without a process running. The Solver interface already returns
- * `Promise<Solution> | Solution`, which is what makes this fit at all.
+ * a pure function except one injected transport. Request building, budget
+ * arithmetic and response mapping — the parts that can actually be wrong — are
+ * exported and tested without a process running. The Solver interface already
+ * returns `Promise<Solution> | Solution`, which is what makes this fit at all.
  *
  * The sidecar returns only the assignment. Leg distances, arrival offsets and
  * totals are computed here by the same code the built-in engine uses, so the
- * comparison view compares routing rather than two implementations of
+ * comparison view compares routing rather than three implementations of
  * arithmetic.
  */
 
+/** Which engine the sidecar should use. Sent on the wire. */
+export type SidecarEngine = "ortools" | "pyvrp" | "vroom";
+
 export interface SidecarRequest {
+  engine: SidecarEngine;
   distances: number[][];
   durations: number[][];
   vehicleCount: number;
@@ -43,19 +48,67 @@ export type SidecarTransport = (
   signal?: AbortSignal,
 ) => Promise<SidecarResponse>;
 
+/**
+ * How an engine spends the time it is given.
+ *
+ * These engines are anytime search: they find something quickly, then keep
+ * trying to improve it until the clock runs out. None of them stops early on
+ * having converged, so whatever budget arrives is spent in full, whether or not
+ * the answer is still changing.
+ *
+ * Measured on the 12-stop example: budgets of 250ms, 500ms, 1s, 2s and 5s all
+ * returned the identical plan. The last 4.75 seconds bought nothing and were
+ * pure latency in front of a dispatcher.
+ */
+export interface BudgetPolicy {
+  /**
+   * Roughly how long a stop is worth searching. The search space grows far
+   * faster than linearly, but the useful *search* time does not: past a point
+   * the metaheuristic is refining a plan it will not meaningfully beat.
+   */
+  msPerStop: number;
+  /** Below this, process startup dominates and there is nothing to gain. */
+  floorMs: number;
+}
+
 /* ------------------------------------------------------------------- pure */
+
+/**
+ * What to actually ask the engine for.
+ *
+ * Never more than the caller asked for: `timeBudgetMs` is a ceiling the user
+ * (or the API client) set, and this only ever spends less of it. That direction
+ * matters — scaling *up* to a computed value would let a big problem quietly
+ * exceed a budget someone chose deliberately, and blow through the platform's
+ * request timeout with it.
+ */
+export function budgetForProblem(
+  stopCount: number,
+  requestedMs: number,
+  policy: BudgetPolicy,
+): number {
+  const wanted = Math.max(policy.floorMs, stopCount * policy.msPerStop);
+  return Math.max(1, Math.min(requestedMs, Math.round(wanted)));
+}
 
 export function buildSidecarRequest(
   problem: Problem,
   matrix: Matrix,
+  engine: SidecarEngine,
+  policy: BudgetPolicy,
 ): SidecarRequest {
   return {
+    engine,
     distances: matrix.distances,
     durations: matrix.durations,
     vehicleCount: problem.vehicles.length,
     roundTrip: problem.options.roundTrip,
     objective: problem.options.objective,
-    timeBudgetMs: problem.options.timeBudgetMs,
+    timeBudgetMs: budgetForProblem(
+      problem.stops.length,
+      problem.options.timeBudgetMs,
+      policy,
+    ),
   };
 }
 
@@ -78,32 +131,42 @@ export function ordersFromResponse(
 
 /* ------------------------------------------------------------------ engine */
 
-export function createOrToolsSolver(
+export interface SidecarSolverConfig {
+  name: SolverName;
+  engine: SidecarEngine;
+  label: string;
+  description: string;
+  budget: BudgetPolicy;
+}
+
+export function createSidecarSolver(
+  config: SidecarSolverConfig,
   transport: SidecarTransport,
   available: boolean,
 ): Solver {
   return {
-    name: "ortools",
-    label: "Balanced",
+    name: config.name,
+    label: config.label,
     available,
-    description:
-      "Google OR-Tools with guided local search. Better routes, a few seconds of thinking.",
+    description: config.description,
 
     async solve(problem: Problem, matrix: Matrix): Promise<Solution> {
       const startedAt = Date.now();
-      const response = await transport(buildSidecarRequest(problem, matrix));
+      const response = await transport(
+        buildSidecarRequest(problem, matrix, config.engine, config.budget),
+      );
       const orders = ordersFromResponse(response, problem.vehicles.length);
 
       /*
        * Check the assignment before believing it. A dropped stop produces a
        * plan that looks entirely plausible — shorter, even — and a delivery
        * that never happens; a repeated one sends two drivers to the same door.
-       * Neither is visible on a map, and this engine is a separate process in
-       * another language, so its output is not trusted on faith.
+       * Neither is visible on a map, and these engines are a separate process
+       * in another language, so their output is not trusted on faith.
        */
       try {
         assertServesEveryStop(problem, orders);
-      } catch (err) {
+      } catch {
         throw new SolverError(
           "INFEASIBLE",
           "The engine returned a plan that doesn't serve every stop. Try planning with Fast.",
@@ -118,7 +181,7 @@ export function createOrToolsSolver(
       }
 
       return assembleSolution(problem, matrix, orders, {
-        solver: "ortools",
+        solver: config.name,
         // The sidecar's own measurement excludes transport; wall time is what
         // the user actually waited, and what the comparison table should show.
         solveTimeMs: Date.now() - startedAt,
@@ -145,6 +208,8 @@ export function httpTransport(
    * private and expects no token.
    */
   token = "",
+  /** Named in error copy, so a failure says which engine to stop picking. */
+  label = "This engine",
 ): SidecarTransport {
   return async (request) => {
     const controller = new AbortController();
@@ -165,7 +230,7 @@ export function httpTransport(
         // by retrying, so say which knob is wrong.
         throw new SolverError(
           "SOLVER_UNAVAILABLE",
-          "The Balanced engine rejected our credentials. Check ORTOOLS_TOKEN matches on both sides.",
+          `The ${label} engine rejected our credentials. Check ORTOOLS_TOKEN matches on both sides.`,
         );
       }
 
@@ -180,10 +245,22 @@ export function httpTransport(
             body?.error?.message ?? "No plan satisfies these constraints.",
           );
         }
+        /*
+         * The sidecar reports an engine it could not import separately from one
+         * that is merely busy or broken. They need different copy: one is a
+         * deployment that needs a rebuild, the other is worth retrying.
+         */
+        if (code === "ENGINE_UNAVAILABLE") {
+          throw new SolverError(
+            "SOLVER_UNAVAILABLE",
+            body?.error?.message ??
+              `${label} isn't installed in the solver service. Plan with Fast for now.`,
+          );
+        }
         throw new SolverError(
           "SOLVER_UNAVAILABLE",
           body?.error?.message ??
-            "The Balanced engine isn't responding. Plan with Fast for now.",
+            `The ${label} engine isn't responding. Plan with Fast for now.`,
         );
       }
 
@@ -193,12 +270,12 @@ export function httpTransport(
       if (err instanceof Error && err.name === "AbortError") {
         throw new SolverError(
           "SOLVER_TIMEOUT",
-          "The Balanced engine took too long. Try Fast, or fewer stops.",
+          `The ${label} engine took too long. Try Fast, or fewer stops.`,
         );
       }
       throw new SolverError(
         "SOLVER_UNAVAILABLE",
-        "Couldn't reach the Balanced engine. Plan with Fast for now.",
+        `Couldn't reach the ${label} engine. Plan with Fast for now.`,
       );
     } finally {
       clearTimeout(timer);

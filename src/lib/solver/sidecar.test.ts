@@ -3,12 +3,15 @@ import { ProblemSchema, expandVehicleCount, type Problem } from "../schema";
 import { haversine } from "./greedy";
 import { SolverError, type Matrix } from "./types";
 import {
+  budgetForProblem,
   buildSidecarRequest,
-  createOrToolsSolver,
+  createSidecarSolver,
   ordersFromResponse,
+  type BudgetPolicy,
   type SidecarResponse,
+  type SidecarSolverConfig,
   type SidecarTransport,
-} from "./ortools";
+} from "./sidecar";
 
 /**
  * The engine runs in another process, in another language. These tests cover
@@ -50,19 +53,73 @@ function matrixOf(problem: Problem): Matrix {
 const transportReturning = (response: SidecarResponse): SidecarTransport =>
   vi.fn(async () => response);
 
+const POLICY: BudgetPolicy = { msPerStop: 40, floorMs: 250 };
+
+const ORTOOLS_CONFIG: SidecarSolverConfig = {
+  name: "ortools",
+  engine: "ortools",
+  label: "Balanced",
+  description: "Google OR-Tools with guided local search.",
+  budget: POLICY,
+};
+
+/** The three engines share this code path; only the config differs. */
+const createOrToolsSolver = (
+  transport: SidecarTransport,
+  available: boolean,
+) => createSidecarSolver(ORTOOLS_CONFIG, transport, available);
+
+const requestFor = (problem: Problem) =>
+  buildSidecarRequest(problem, matrixOf(problem), "ortools", POLICY);
+
 describe("buildSidecarRequest", () => {
   it("sends the matrix and the user's choices", () => {
     const problem = problemOf(4, 2, { objective: "distance", roundTrip: false });
-    const request = buildSidecarRequest(problem, matrixOf(problem));
+    const request = requestFor(problem);
     expect(request.vehicleCount).toBe(2);
     expect(request.objective).toBe("distance");
     expect(request.roundTrip).toBe(false);
     expect(request.distances).toHaveLength(5);
   });
 
-  it("passes the time budget through, since this engine actually uses it", () => {
+  it("names the engine, so one sidecar can serve all three", () => {
+    const problem = problemOf(3, 1);
+    expect(requestFor(problem).engine).toBe("ortools");
+    expect(
+      buildSidecarRequest(problem, matrixOf(problem), "pyvrp", POLICY).engine,
+    ).toBe("pyvrp");
+  });
+
+  it("scales the time budget to the problem instead of spending all of it", () => {
+    // These engines run until the clock stops rather than until they converge,
+    // so a 3-stop plan handed 4.5s waits 4.5s for an answer it had in 250ms.
     const problem = problemOf(3, 1, { timeBudgetMs: 4500 });
-    expect(buildSidecarRequest(problem, matrixOf(problem)).timeBudgetMs).toBe(4500);
+    expect(requestFor(problem).timeBudgetMs).toBe(250);
+  });
+});
+
+describe("budgetForProblem", () => {
+  it("gives a big problem more time than a small one", () => {
+    expect(budgetForProblem(90, 10_000, POLICY)).toBeGreaterThan(
+      budgetForProblem(10, 10_000, POLICY),
+    );
+  });
+
+  it("never exceeds what the caller asked for", () => {
+    // The requested budget is a ceiling someone chose. Scaling *up* past it
+    // would blow through the platform request timeout it was chosen to respect.
+    expect(budgetForProblem(500, 2_000, POLICY)).toBe(2_000);
+    expect(budgetForProblem(500, 100, POLICY)).toBe(100);
+  });
+
+  it("does not drop below the floor, where startup dominates", () => {
+    expect(budgetForProblem(1, 10_000, POLICY)).toBe(POLICY.floorMs);
+    expect(budgetForProblem(0, 10_000, POLICY)).toBe(POLICY.floorMs);
+  });
+
+  it("always asks for at least a millisecond", () => {
+    // A zero budget is a solver that returns nothing at all.
+    expect(budgetForProblem(10, 0, POLICY)).toBeGreaterThan(0);
   });
 });
 

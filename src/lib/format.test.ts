@@ -5,6 +5,7 @@ import {
   formatDistance,
   formatDuration,
   formatSaving,
+  formatSolveTime,
   pluralise,
 } from "./format";
 
@@ -119,5 +120,42 @@ describe("formatCoordinate", () => {
 
   it("returns a dash rather than NaN", () => {
     expect(formatCoordinate(Number.NaN, 2.3)).toBe("—");
+  });
+});
+
+describe("formatSolveTime", () => {
+  it("keeps sub-second times in milliseconds", () => {
+    expect(formatSolveTime(0)).toBe("0 ms");
+    expect(formatSolveTime(387)).toBe("387 ms");
+    expect(formatSolveTime(999)).toBe("999 ms");
+  });
+
+  it("shows a decimal in the range engines actually differ in", () => {
+    expect(formatSolveTime(1000)).toBe("1.0 s");
+    expect(formatSolveTime(5119)).toBe("5.1 s");
+    expect(formatSolveTime(9949)).toBe("9.9 s");
+  });
+
+  it("drops the decimal once it is noise", () => {
+    expect(formatSolveTime(10_400)).toBe("10 s");
+    expect(formatSolveTime(45_000)).toBe("45 s");
+  });
+
+  /*
+   * The bug this function exists to fix: a five-second solve was rendered
+   * "under a minute" beside an engine reporting "0 ms", which reads as two
+   * orders of magnitude worse than it is.
+   */
+  it("does not describe a five-second solve as 'under a minute'", () => {
+    expect(formatSolveTime(5119)).not.toBe("under a minute");
+  });
+
+  it("hands genuinely long solves to the journey formatter", () => {
+    expect(formatSolveTime(90_000)).toBe("2 min");
+  });
+
+  it("returns a dash for nonsense rather than NaN", () => {
+    expect(formatSolveTime(Number.NaN)).toBe("—");
+    expect(formatSolveTime(-1)).toBe("—");
   });
 });

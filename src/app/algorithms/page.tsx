@@ -204,11 +204,13 @@ export default function AlgorithmsPage() {
 
         <h2>The engines</h2>
         <p>
-          Four engines exist in the registry. Two are built; two are named so
-          the selector can say what is coming rather than showing a dead control
-          with no explanation. Which are actually available depends on how this
-          instance is configured — ask{" "}
-          <code>GET /api/v1/solve</code> and it will tell you.
+          Four engines, all built. One runs inside the app; the other three run
+          in a solver service beside it, because OR-Tools, PyVRP and VROOM are
+          C++ libraries with no usable JavaScript build. They share one service
+          and one protocol, so which of them you pick is a dropdown rather than
+          a deployment. Whether that service is configured here decides which
+          are actually offered — ask <code>GET /api/v1/solve</code> and it will
+          tell you.
         </p>
 
         <table className={styles.table}>
@@ -242,8 +244,8 @@ export default function AlgorithmsPage() {
                 <code>ortools</code>
               </td>
               <td style={{ textAlign: "left" }}>
-                <strong>Built, needs a sidecar.</strong> Active only where
-                <code>ORTOOLS_URL</code> is set. Off on this deployment.
+                <strong>Active where the solver service is set up.</strong>{" "}
+                Needs <code>SIDECAR_URL</code>.
               </td>
               <td style={{ textAlign: "left" }}>
                 Google OR-Tools with guided local search, in a Python process
@@ -258,11 +260,13 @@ export default function AlgorithmsPage() {
                 <code>pyvrp</code>
               </td>
               <td style={{ textAlign: "left" }}>
-                <strong>Not built.</strong> Listed as coming soon.
+                <strong>Active where the solver service is set up.</strong>{" "}
+                Needs <code>SIDECAR_URL</code>.
               </td>
               <td style={{ textAlign: "left" }}>
                 Hybrid genetic search. The strongest routes available for this
-                class of problem, given a longer time budget.
+                class of problem, given a longer time budget — which is why it
+                is given the largest one.
               </td>
             </tr>
             <tr>
@@ -272,14 +276,47 @@ export default function AlgorithmsPage() {
                 <code>vroom</code>
               </td>
               <td style={{ textAlign: "left" }}>
-                <strong>Not built.</strong> Listed as coming soon.
+                <strong>Active where the solver service is set up.</strong>{" "}
+                Needs <code>SIDECAR_URL</code>.
               </td>
               <td style={{ textAlign: "left" }}>
-                A lightweight open-source engine, quick on mid-sized problems.
+                A lightweight open-source engine. On a 40-stop test it matched
+                OR-Tools&rsquo; balanced plan to within 7% while returning in
+                281ms rather than four seconds.
               </td>
             </tr>
           </tbody>
         </table>
+
+        <h3>How &ldquo;even workload&rdquo; is enforced</h3>
+        <p>
+          The two objectives are not equally easy to ask for. &ldquo;Shortest
+          total&rdquo; is what every one of these engines optimises natively.
+          &ldquo;Even workload&rdquo; — minimising the <em>longest</em> route
+          rather than the sum — is a different objective, and only OR-Tools
+          supports it directly, through a span cost on its distance dimension.
+        </p>
+        <p>
+          Left alone on a round trip, PyVRP and VROOM do the arithmetically
+          correct and operationally useless thing: they put every stop on one
+          vehicle, because a second van means a second trip out to the round and
+          back. On a 40-stop test that is one driver covering 239&nbsp;km while
+          three vans sit idle.
+        </p>
+        <p>
+          Both accept a per-vehicle distance cap, so minimising the longest route
+          becomes a search for the smallest cap that still admits a plan — a
+          binary search bounded below by a perfectly even split and above by the
+          uncapped answer. Four probes gets within a few percent. On that same
+          40-stop test it takes the worst route from 144&nbsp;km down to
+          103&nbsp;km, against OR-Tools&rsquo; 96&nbsp;km.
+        </p>
+        <p>
+          This matters when reading the comparison table: on &ldquo;even
+          workload&rdquo; OR-Tools is solving the objective, and the other two
+          are approximating it. On &ldquo;shortest total&rdquo; all three are
+          solving the same problem, and the numbers are directly comparable.
+        </p>
 
         <div className={styles.aside}>
           Adding an engine is a file and a registry entry — every one implements
