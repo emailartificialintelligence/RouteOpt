@@ -709,7 +709,8 @@
   /* Links, snippets and engine comparisons are chrome; a printed manifest is
      stops in order, nothing else. */
   .code,
-  .table {
+  .table,
+  .actions {
     display: none !important;
   }
 

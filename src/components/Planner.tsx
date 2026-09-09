@@ -35,6 +35,7 @@ import { StopList } from "./StopList";
 import { PlanControls } from "./PlanControls";
 import { RouteSummary } from "./RouteSummary";
 import { SharePanel } from "./SharePanel";
+import { DownloadPanel } from "./DownloadPanel";
 import { EngineComparison } from "./EngineComparison";
 import type { DrawnRoute, MapMode } from "./MapCanvas";
 import styles from "./Planner.module.css";
@@ -607,6 +608,11 @@ export function Planner() {
         {plan && (
           <>
             <RouteSummary
+              problem={plan.problem}
+              solution={plan.solution}
+              onPrint={() => window.print()}
+            />
+            <DownloadPanel
               problem={plan.problem}
               solution={plan.solution}
               onPrint={() => window.print()}

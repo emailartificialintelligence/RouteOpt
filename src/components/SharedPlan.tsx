@@ -8,6 +8,7 @@ import { routePath } from "@/lib/routes";
 import type { Problem, Solution } from "@/lib/schema";
 import { RouteSummary } from "./RouteSummary";
 import { SharePanel } from "./SharePanel";
+import { DownloadPanel } from "./DownloadPanel";
 import type { DrawnRoute } from "./MapCanvas";
 import styles from "./Planner.module.css";
 
@@ -83,6 +84,13 @@ export function SharedPlan({ problem, solution, createdAt }: SharedPlanProps) {
         </header>
 
         <RouteSummary
+          problem={problem}
+          solution={solution}
+          onPrint={() => window.print()}
+        />
+
+        {/* A recipient needs the spreadsheet as much as the person who made it. */}
+        <DownloadPanel
           problem={problem}
           solution={solution}
           onPrint={() => window.print()}
