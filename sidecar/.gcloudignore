@@ -1,0 +1,6 @@
+# Only the Dockerfile and solver.py need to reach the build.
+.venv/
+__pycache__/
+*.pyc
+fly.toml
+README.md

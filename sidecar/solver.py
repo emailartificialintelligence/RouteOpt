@@ -45,7 +45,14 @@ except ImportError:  # pragma: no cover - import guard, not logic
 
 
 HOST = os.environ.get("ORTOOLS_HOST", "127.0.0.1")
-PORT = int(os.environ.get("ORTOOLS_PORT", "8081"))
+
+# PORT before ORTOOLS_PORT.
+#
+# Cloud Run, and most container hosts, inject the port to listen on as PORT and
+# health-check that exact port. A service that listens somewhere else never
+# passes its first check and is killed before it serves anything — with a log
+# that says only "container failed to start".
+PORT = int(os.environ.get("PORT") or os.environ.get("ORTOOLS_PORT") or "8081")
 
 # Shared secret.
 #
@@ -64,7 +71,12 @@ ORTOOLS_TOKEN = os.environ.get("ORTOOLS_TOKEN", "").strip()
 MAX_NODES = 250
 # Hard ceiling regardless of what the caller asks for, so one request cannot
 # occupy the process indefinitely.
-MAX_TIME_BUDGET_MS = 60_000
+#
+# Configurable because the right value depends on where this runs. On a free
+# tier that bills by CPU-second, or behind a platform with its own request
+# timeout, a shorter cap is the difference between a working engine and one
+# that always times out. The caller may ask for less; it can never ask for more.
+MAX_TIME_BUDGET_MS = int(os.environ.get("ORTOOLS_MAX_BUDGET_MS", "60000"))
 
 # OR-Tools works in integers. Distances arrive in metres and may be floats.
 SCALE = 1
@@ -247,7 +259,10 @@ def main():
     signal.signal(signal.SIGTERM, shutdown)
 
     mode = "token required" if ORTOOLS_TOKEN else "NO AUTH (private network only)"
-    sys.stderr.write("[ortools] listening on http://%s:%d — %s\n" % (HOST, PORT, mode))
+    sys.stderr.write(
+        "[ortools] listening on http://%s:%d — %s, max budget %dms\n"
+        % (HOST, PORT, mode, MAX_TIME_BUDGET_MS)
+    )
     server.serve_forever()
 
 

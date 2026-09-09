@@ -91,8 +91,8 @@ that same test OR-Tools found a route about 16% shorter still, taking five
 seconds instead of seven milliseconds.
 
 **To get it back:** see **[DEPLOY-SIDECAR.md](DEPLOY-SIDECAR.md)** — about 15
-minutes and a few dollars a month. It runs the engine on Fly.io and points the
-app at it with two environment variables. No code change.
+minutes, and free — it runs the engine on Google Cloud Run, which sleeps when
+idle, and points the app at it with two environment variables. No code change.
 
 ### Road distances come from a public demo server
 

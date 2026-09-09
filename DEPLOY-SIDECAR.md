@@ -1,82 +1,63 @@
-# Adding the Balanced engine to a Vercel deployment
+# Turning on the Balanced engine
 
-Vercel runs JavaScript functions, not long-lived Python processes, so the
-OR-Tools engine cannot live there. It runs as a small service somewhere else,
-and the app talks to it over HTTPS.
+Vercel runs JavaScript. OR-Tools is C++ with Python bindings, so it runs
+somewhere else and the app talks to it over HTTPS.
 
-**Time:** about 15 minutes. **Cost:** a few dollars a month.
+This guide uses **Google Cloud Run**, which is free for a tool at this scale:
+the container sleeps when nobody is planning, and you are not billed while it
+sleeps. Waking takes a few seconds, which the app tolerates.
 
-The app needs no code change — it enables the engine when it sees `ORTOOLS_URL`.
+**Time:** about 15 minutes. **Cost:** nothing, within the free allowance.
+
+No code changes — the app enables the engine when it sees `ORTOOLS_URL`.
 
 ---
 
-## Step 1 — Install the Fly CLI
+## Step 1 — Get a Google Cloud account
+
+Go to <https://console.cloud.google.com>. You will need a card on file even
+though this stays inside the free allowance; Google uses it to verify you.
+
+Create a project and note its **Project ID** (something like
+`routeplan-472913` — not the display name).
+
+## Step 2 — Install the command-line tool
 
 ```bash
-curl -L https://fly.io/install.sh | sh
-fly auth signup      # or: fly auth login
+brew install --cask google-cloud-sdk
+gcloud auth login
 ```
 
-## Step 2 — Create the app
+Without Homebrew: <https://cloud.google.com/sdk/docs/install>
+
+## Step 3 — Deploy
+
+From the project folder, with your Project ID:
 
 ```bash
-cd /Users/saurabh/Downloads/Studio/RouteOpt/sidecar
-fly launch --no-deploy
+./sidecar/deploy-cloud-run.sh YOUR-PROJECT-ID
 ```
 
-It will ask a few questions. Accept the detected Dockerfile, pick a region near
-your Vercel one, and **say no** to databases and to deploying now.
+The first run takes a few minutes — it builds the container and uploads it.
+When it finishes it prints two values. **Keep them.**
 
-## Step 3 — Set a shared secret
+## Step 4 — Tell the app where it is
 
-This service does real CPU work on any request it receives, and on Fly it is on
-the public internet. Without a token, anyone who finds the URL can spend your
-CPU.
-
-```bash
-fly secrets set ORTOOLS_TOKEN="$(openssl rand -hex 32)"
-```
-
-Print it — you need the same value in Vercel:
-
-```bash
-fly ssh console -C "printenv ORTOOLS_TOKEN"
-```
-
-Or generate it yourself first and paste the same string into both places.
-
-## Step 4 — Deploy
-
-```bash
-fly deploy
-```
-
-Then check it is alive:
-
-```bash
-curl https://your-app-name.fly.dev/health
-```
-
-```json
-{ "status": "ok", "engine": "ortools" }
-```
-
-## Step 5 — Point the app at it
-
-In Vercel → your project → **Settings → Environment Variables**, add two:
+In Vercel → your project → **Settings → Environment Variables**, add the two
+values the script printed:
 
 | Name | Value |
 |---|---|
-| `ORTOOLS_URL` | `https://your-app-name.fly.dev` |
-| `ORTOOLS_TOKEN` | the same secret from step 3 |
+| `ORTOOLS_URL` | the `https://...run.app` URL |
+| `ORTOOLS_TOKEN` | the long random string |
 
 Then **Deployments → ⋯ → Redeploy**. Environment variables are read at build
 time, so an existing deployment will not pick them up.
 
-## Step 6 — Confirm
+## Step 5 — Check
 
 ```bash
-curl https://your-vercel-app.vercel.app/api/health
+curl https://your-app.vercel.app/api/health
 ```
 
 You want `"ortools": true`. In the app, **Balanced** is now selectable and
@@ -84,42 +65,58 @@ You want `"ortools": true`. In the app, **Balanced** is now selectable and
 
 ---
 
-## What you should expect
+## What the settings do, and why
 
-On a 40-stop, 3-van test with real road distances:
+The deploy script is tuned to stay free and to fail safely:
 
-| Engine | Total | Longest route | Time |
-|---|---|---|---|
-| Fast | 90.0 km | 32.1 km | 7 ms |
-| Balanced | 76.0 km | — (one van) | 5 s |
-| Balanced (even workload) | 90.6 km | 30.3 km | 5 s |
+| Setting | Why |
+|---|---|
+| `--min-instances 0` | Sleeps when idle, so idle costs nothing. This is the whole reason it is free. |
+| `--cpu 1 --memory 512Mi` | OR-Tools imports in under half a second and these problems are small. More costs more per second and solves no faster. |
+| `--concurrency 2` | A solve pins a core. More requests on one instance make each slower rather than serving more. |
+| `ORTOOLS_MAX_BUDGET_MS=5000` | Caps how long any single solve may run, whatever the app asks for. Bounds both your bill and the wait. |
+| `ORTOOLS_TOKEN` | The service is reachable from the internet and spends CPU on any request. Without a token it is free compute for whoever finds it. |
 
-Balanced finds materially shorter routes and takes about a thousand times
-longer. Fast stays the default; Balanced is there for when the plan matters
-more than the wait.
+**On waking up.** With `min-instances 0`, the first request after a quiet spell
+waits for the container to start — 2–4 seconds, then the solve. Measured
+locally, OR-Tools itself imports in 0.44s, so most of that is the platform.
+If the wait bothers you, `--min-instances 1` removes it entirely and starts
+costing a few dollars a month. That is the only real trade here.
 
 ## If it does not work
 
-**`"ortools": false` after redeploying.** `ORTOOLS_URL` is missing or empty. An
+**`"ortools": false` after redeploying.** `ORTOOLS_URL` missing or empty. An
 empty variable counts as unset.
 
-**"rejected our credentials".** `ORTOOLS_TOKEN` differs between Fly and Vercel.
+**"rejected our credentials".** `ORTOOLS_TOKEN` differs between Cloud Run and
+Vercel. Print the deployed one:
 
-**"took too long".** The machine cold-started. Check `min_machines_running = 1`
-in `fly.toml` — a stopped machine has to boot OR-Tools before it can solve, and
-that overruns the app's budget.
+```bash
+gcloud run services describe routeplan-solver --region europe-west1 \
+  --format 'value(spec.template.spec.containers[0].env)'
+```
 
-**"isn't responding".** `fly logs` will say why; `fly status` shows whether the
-machine is up.
+**"took too long".** Two possible causes: the container was cold, or Vercel's
+own function limit is shorter than the solve. Lower `ORTOOLS_MAX_BUDGET_MS`, or
+set `--min-instances 1`.
 
-## Cheaper and other options
+**"container failed to start"** in the Cloud Run logs. The service must listen
+on the `PORT` Cloud Run injects — it does, but this is the first thing to check
+if you change how it starts.
 
-Any host that runs a container works — Railway, Render, a $5 VM. Two
-requirements:
+```bash
+gcloud run services logs read routeplan-solver --region europe-west1 --limit 50
+```
 
-1. **It must not sleep.** Free tiers that spin down after inactivity will cold
-   start into a timeout on the first solve after a quiet period.
-2. **It must be HTTPS**, or browsers will block the call from an HTTPS app.
+## Other hosts
 
-If you would rather not run a second service at all, [DEPLOY.md](DEPLOY.md)
-puts everything on one VM instead.
+Any host that runs a container works. Two requirements:
+
+1. **It must listen on `$PORT`** — the sidecar already does.
+2. **It must not sleep for ~50 seconds.** Free tiers that take that long to
+   wake will time out on the first solve after a quiet period, which looks like
+   a broken feature rather than a sleeping one.
+
+`sidecar/fly.toml` is kept for Fly.io, which does not sleep but is not free.
+[DEPLOY.md](DEPLOY.md) puts everything on one VM instead, which also gets you
+self-hosted road distances and lifts the 99-stop cap.
