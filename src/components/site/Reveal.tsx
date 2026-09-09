@@ -1,23 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import styles from "./site.module.css";
 
 /**
- * Fades a section up as it comes into view.
+ * Fades a section up as it enters view.
  *
- * Driven by IntersectionObserver rather than scroll position, so nothing runs
- * on the main thread while the page is idle. Two rules keep it from becoming
- * irritating:
+ * Built so it cannot hide content. The earlier version started hidden in CSS
+ * and waited for IntersectionObserver to reveal it — which meant any path where
+ * that callback did not run left the whole page blank below the hero. It did,
+ * in production, twice.
  *
- *   - It fires once. Content that re-animates every time it re-enters the
- *     viewport makes a page feel unstable to anyone who scrolls back up.
- *   - Anything already on screen at load renders immediately. Animating the
- *     content someone came to read, before they can read it, is a tax rather
- *     than a flourish.
- *
- * Respecting prefers-reduced-motion is not optional here: the reduced-motion
- * branch renders visible with no transition at all, rather than a faster one.
+ * So the default state is now *visible*, and the hidden state is applied by
+ * JavaScript in a layout effect — before the browser paints, so there is no
+ * flash. If the script never runs, never hydrates, or throws, the content is
+ * simply there and only the animation is missing. An animation must never be
+ * the thing standing between a reader and the words.
  */
 export function Reveal({
   children,
@@ -32,65 +36,60 @@ export function Reveal({
   className?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
-  const [shown, setShown] = useState(false);
+  /** "ready" until JS decides to animate; then "pending", then "shown". */
+  const [phase, setPhase] = useState<"ready" | "pending" | "shown">("ready");
+
+  // Before paint: decide whether to animate at all, and hide only if so.
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    // Already on screen — show it as it is rather than animating what the
+    // reader is about to look at.
+    if (node.getBoundingClientRect().top < window.innerHeight * 0.92) return;
+
+    setPhase("pending");
+  }, []);
 
   useEffect(() => {
+    if (phase !== "pending") return;
     const node = ref.current;
     if (!node) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setShown(true);
-      return;
-    }
-
-    // Already in view on load — show it now rather than animating it in.
-    const rect = node.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 0.9) {
-      setShown(true);
-      return;
-    }
+    const reveal = () => setPhase("shown");
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-        setShown(true);
+        reveal();
         observer.disconnect();
       },
-      // Fire slightly before the element arrives, so it has finished by the
-      // time it is properly on screen.
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.05 },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.01 },
     );
     observer.observe(node);
 
-    /*
-     * Failsafe: show it regardless after a short delay.
-     *
-     * An animation that hides content until an event fires has turned a visual
-     * flourish into a single point of failure for the words themselves. The
-     * observer can go unfired for reasons that have nothing to do with the
-     * user — a background tab that never paints, an embedded or headless view,
-     * a browser that throttles callbacks. Any of those would leave the page
-     * permanently blank below the hero.
-     *
-     * If the observer works this never matters; it fires first. If it does
-     * not, the content appears anyway and only the animation is lost.
-     */
-    const failsafe = window.setTimeout(() => setShown(true), 1200);
+    // Backstop, in case the observer never fires. Short: a reader who has
+    // scrolled here is waiting.
+    const failsafe = window.setTimeout(reveal, 900);
 
     return () => {
       observer.disconnect();
       window.clearTimeout(failsafe);
     };
-  }, []);
+  }, [phase]);
 
   return (
     <Tag
       ref={ref as never}
-      className={[styles.reveal, shown ? styles.revealShown : "", className]
+      className={[
+        className,
+        phase === "pending" ? styles.revealPending : "",
+        phase === "shown" ? styles.revealShown : "",
+      ]
         .filter(Boolean)
         .join(" ")}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+      style={delay && phase !== "ready" ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
     </Tag>
