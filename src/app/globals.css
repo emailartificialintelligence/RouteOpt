@@ -46,7 +46,16 @@
 
   --radius: 10px;
   --radius-sm: 6px;
-  --rail-width: 360px;
+  /*
+   * The rail is a proportion, not a fixed column: 35% rail, 65% map.
+   *
+   * 360px was sized around the input form. Once a plan comes back the rail is
+   * carrying per-driver summaries, a download block and a four-row engine
+   * comparison, and that content was the thing being squeezed while the map
+   * kept space it was not using. Below 768px this is overridden entirely and
+   * the rail becomes a bottom sheet.
+   */
+  --rail-width: 35%;
   --unit: 8px;
 }
 

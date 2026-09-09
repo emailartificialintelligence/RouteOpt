@@ -99,9 +99,11 @@ figures, which is the part the stop list depends on. If the printed manifest
 ever proves hard to read in the field, that trade is the first thing to revisit.
 
 **Layout:** the marketing pages are centred, max 940px, with a sticky
-translucent header. The tool at `/plan` is a full-bleed map with a fixed left
-rail (360px) and no site header — someone on that page is working. On mobile
-the rail becomes a bottom sheet.
+translucent header. The tool at `/plan` splits 35% rail / 65% map, with no site
+header — someone on that page is working. The rail was a fixed 360px, sized
+around the input form; a solved plan puts per-driver summaries, downloads and
+the engine comparison in that column, so it scales with the window instead. On
+mobile the rail becomes a bottom sheet.
 
 **Motion:** subtle, short, and always tied to something real.
 
