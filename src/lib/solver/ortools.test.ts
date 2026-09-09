@@ -183,6 +183,21 @@ describe("createOrToolsSolver", () => {
     await expect(solver.solve(problem, matrixOf(problem))).rejects.toThrow(SolverError);
   });
 
+  it("names the token when the sidecar rejects our credentials", async () => {
+    // A wrong token is a deployment mistake, not something retrying fixes, so
+    // the message has to say which knob is wrong.
+    const problem = problemOf(3, 1);
+    const solver = createOrToolsSolver(async () => {
+      throw new SolverError(
+        "SOLVER_UNAVAILABLE",
+        "The Balanced engine rejected our credentials. Check ORTOOLS_TOKEN matches on both sides.",
+      );
+    }, true);
+    await expect(solver.solve(problem, matrixOf(problem))).rejects.toThrow(
+      /ORTOOLS_TOKEN/,
+    );
+  });
+
   it("is marked unavailable when no sidecar is configured", () => {
     const solver = createOrToolsSolver(transportReturning({ routes: [], solveTimeMs: 0 }), false);
     expect(solver.available).toBe(false);

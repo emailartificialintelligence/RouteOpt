@@ -27,6 +27,7 @@ and has no authentication; it is not meant to face the internet.
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import signal
@@ -45,6 +46,18 @@ except ImportError:  # pragma: no cover - import guard, not logic
 
 HOST = os.environ.get("ORTOOLS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("ORTOOLS_PORT", "8081"))
+
+# Shared secret.
+#
+# On a single VM this service sits on a private network and needs no auth. Hosted
+# on its own — beside a Vercel app, say — it is on the public internet, and it
+# will happily spend seconds of CPU on any request that arrives. Set
+# ORTOOLS_TOKEN there and the app sends it as a bearer token.
+#
+# Empty means no check, which is correct for the private-network case and wrong
+# for anything reachable from outside. The startup log says which mode it is in
+# so nobody discovers it from a bill.
+ORTOOLS_TOKEN = os.environ.get("ORTOOLS_TOKEN", "").strip()
 
 # A matrix bigger than this means something upstream is wrong; refuse rather
 # than spend minutes on it.
@@ -142,6 +155,16 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quieter than the default access log
         sys.stderr.write("[ortools] %s\n" % (fmt % args))
 
+    def _authorised(self):
+        """Constant-time comparison; a token check that leaks timing is theatre."""
+        if not ORTOOLS_TOKEN:
+            return True
+        header = self.headers.get("Authorization", "")
+        prefix = "Bearer "
+        if not header.startswith(prefix):
+            return False
+        return hmac.compare_digest(header[len(prefix):], ORTOOLS_TOKEN)
+
     def do_GET(self):
         if self.path == "/health":
             self._send(200, {"status": "ok", "engine": "ortools"})
@@ -149,6 +172,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": {"code": "NOT_FOUND", "message": "No such path."}})
 
     def do_POST(self):
+        if not self._authorised():
+            self._send(401, {"error": {"code": "UNAUTHORISED",
+                                       "message": "Missing or invalid token."}})
+            return
+
         if self.path != "/solve":
             self._send(404, {"error": {"code": "NOT_FOUND", "message": "No such path."}})
             return
@@ -218,7 +246,8 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    sys.stderr.write("[ortools] listening on http://%s:%d\n" % (HOST, PORT))
+    mode = "token required" if ORTOOLS_TOKEN else "NO AUTH (private network only)"
+    sys.stderr.write("[ortools] listening on http://%s:%d — %s\n" % (HOST, PORT, mode))
     server.serve_forever()
 
 

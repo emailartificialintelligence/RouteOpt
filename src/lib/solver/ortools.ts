@@ -134,17 +134,40 @@ export function createOrToolsSolver(
  * The real transport. Reads its URL from the environment, which is why it lives
  * here and not inside the solver.
  */
-export function httpTransport(baseUrl: string, timeoutMs: number): SidecarTransport {
+export function httpTransport(
+  baseUrl: string,
+  timeoutMs: number,
+  /**
+   * Shared secret, when the sidecar is not on a private network.
+   *
+   * Hosted separately from the app it is reachable from the internet and will
+   * spend seconds of CPU on any request it receives. Empty means the sidecar is
+   * private and expects no token.
+   */
+  token = "",
+): SidecarTransport {
   return async (request) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(`${baseUrl.replace(/\/$/, "")}/solve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(request),
         signal: controller.signal,
       });
+
+      if (res.status === 401) {
+        // A wrong token is a deployment mistake, not something a user can fix
+        // by retrying, so say which knob is wrong.
+        throw new SolverError(
+          "SOLVER_UNAVAILABLE",
+          "The Balanced engine rejected our credentials. Check ORTOOLS_TOKEN matches on both sides.",
+        );
+      }
 
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as

@@ -90,14 +90,9 @@ Fast is genuinely good — 66% shorter than list order on the 40-stop test. On
 that same test OR-Tools found a route about 16% shorter still, taking five
 seconds instead of seven milliseconds.
 
-**To get it back later:** run the sidecar anywhere with a public URL (a $5 VM,
-Fly.io, Railway) and add one environment variable in Vercel:
-
-```
-ORTOOLS_URL=https://your-sidecar-host
-```
-
-The app picks it up and enables the engine. No code change.
+**To get it back:** see **[DEPLOY-SIDECAR.md](DEPLOY-SIDECAR.md)** — about 15
+minutes and a few dollars a month. It runs the engine on Fly.io and points the
+app at it with two environment variables. No code change.
 
 ### Road distances come from a public demo server
 

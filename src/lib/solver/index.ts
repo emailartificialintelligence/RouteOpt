@@ -11,6 +11,8 @@ import { envNumber, envString } from "../env";
  */
 const ORTOOLS_URL = envString(process.env.ORTOOLS_URL, "");
 const ORTOOLS_TIMEOUT_MS = envNumber(process.env.ORTOOLS_TIMEOUT_MS, 30_000);
+/** Required when the sidecar is hosted separately rather than on a private network. */
+const ORTOOLS_TOKEN = envString(process.env.ORTOOLS_TOKEN, "");
 
 /**
  * Adding an engine is a file plus an entry here. Nothing else changes.
@@ -38,7 +40,7 @@ export const solvers: Record<SolverName, Solver> = {
   greedy: greedySolver,
 
   ortools: createOrToolsSolver(
-    httpTransport(ORTOOLS_URL, ORTOOLS_TIMEOUT_MS),
+    httpTransport(ORTOOLS_URL, ORTOOLS_TIMEOUT_MS, ORTOOLS_TOKEN),
     ORTOOLS_URL !== "",
   ),
 

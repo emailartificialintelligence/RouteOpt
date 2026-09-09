@@ -1,0 +1,52 @@
+# Fly.io deployment for the OR-Tools sidecar.
+#
+#   cd sidecar
+#   fly launch --no-deploy --name your-app-name
+#   fly secrets set ORTOOLS_TOKEN="$(openssl rand -hex 32)"
+#   fly deploy
+#
+# See DEPLOY-SIDECAR.md for the full walkthrough.
+
+app = "routeplan-solver"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ORTOOLS_HOST = "0.0.0.0"
+  ORTOOLS_PORT = "8081"
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+
+  # Do NOT set min_machines_running = 0.
+  #
+  # A stopped machine has to cold start, and OR-Tools takes several seconds to
+  # boot before it even begins solving. Added to a five-second solve that
+  # overruns the app's 30-second budget, and the engine appears broken rather
+  # than slow. One always-on shared machine is a few dollars a month.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    # A solve pins a core for seconds. Queue rather than thrash: two concurrent
+    # solves on one shared CPU take longer each than running them in turn.
+    type = "requests"
+    soft_limit = 2
+    hard_limit = 4
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/health"
+
+[[vm]]
+  # OR-Tools is memory-hungry for its size. 512 MB is enough to import and
+  # solve small problems, and leaves nothing spare; 1 GB is the safe floor.
+  size = "shared-cpu-1x"
+  memory = "1gb"
