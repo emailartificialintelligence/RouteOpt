@@ -38,6 +38,7 @@ import json
 import os
 import signal
 import sys
+import threading
 import time
 import warnings
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -587,7 +588,18 @@ def main():
 
     def shutdown(_signum, _frame):
         sys.stderr.write("[sidecar] shutting down\n")
-        server.shutdown()
+        # From another thread, deliberately.
+        #
+        # shutdown() blocks until serve_forever() has returned, and a signal
+        # handler runs *in* the main thread — the one sitting inside
+        # serve_forever(). Calling it directly deadlocks: the loop cannot exit
+        # because the thread that would exit it is waiting for it to exit.
+        #
+        # The symptom is a process that ignores SIGTERM entirely and has to be
+        # SIGKILLed. On Cloud Run that means every scale-down waits out the
+        # 10-second grace period and then dies mid-request, dropping whatever
+        # solve was in flight instead of finishing it.
+        threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
