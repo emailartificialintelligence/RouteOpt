@@ -55,51 +55,65 @@ approximate — degrade, don't fail.
 
 ## Design direction
 
-The vernacular is dispatch paperwork and transit signage, not SaaS marketing.
-This is a working instrument. The map is the product; chrome stays quiet.
-
-**Do not produce:** cream background with terracotta accent, identical rounded
-cards with soft grey shadows, all-caps eyebrow labels, gradient washes, arrows
-appended to button text, fade-up animations on every section.
+The house style follows DocExtract: a zinc palette on white, near-black primary
+actions, hairline borders, generous radii, and a faint dotted ground behind the
+marketing pages. Geist for text, Geist Mono for code. The map is still the
+product; chrome stays quiet.
 
 **Tokens**
 
 ```css
---paper:    #FBFAF7;  /* manifest stock */
---ink:      #101B2E;  /* navy-black, structural text */
---ink-soft: #55606E;  /* secondary text */
---rule:     #D8D3C8;  /* hairline dividers */
---signal:   #0B5D8A;  /* transit blue: primary actions, depot marker */
---warn:     #B45309;  /* amber: approximate distances, unsolved stops */
+--paper:        #FFFFFF;  /* page */
+--paper-sunk:   #FAFAFA;  /* insets, code blocks */
+--paper-muted:  #F4F4F5;  /* hover, selected rows */
+--ink:          #09090B;  /* text */
+--ink-soft:     #71717A;  /* secondary text */
+--rule:         #E4E4E7;  /* hairlines */
+--rule-strong:  #D4D4D8;  /* button borders */
+--primary:      #18181B;  /* primary actions */
+--on-primary:   #FAFAFA;
+--warn:         #B45309;  /* approximate distances, unsolved stops */
+--radius:       10px;     /* cards, panels */
+--radius-sm:    6px;      /* buttons, inputs */
 ```
 
-Route colors, in order. Chosen to stay distinguishable against a muted basemap and
-to survive black-and-white printing at different weights:
+**The map keeps its own colours.** Route hues are chosen to stay distinguishable
+from each other on a muted basemap and to survive black-and-white printing, and
+the depot stays transit blue (`--signal: #0B5D8A`) so it reads as a different
+kind of thing from a stop. Those are functional, not decorative, so the theme
+stops at the edge of the canvas.
+
+Route colors, in order:
 
 ```
 #0B5D8A  #B3261E  #1B7A3E  #8A5A00  #6B3FA0  #B8005C  #00706B  #A03E00
 ```
 
-**Type:** Atkinson Hyperlegible Next throughout. It is a legibility typeface, and
-legibility is the actual brief — a dispatcher scans a stop list, a driver reads a
-printed manifest in a van. Use its tabular numerals (`font-variant-numeric:
-tabular-nums`) for all distances, times and counts so columns align. One family;
-no mono face for data labels.
+**Type:** Geist throughout, Geist Mono for code and API snippets. Use tabular
+numerals (`font-variant-numeric: tabular-nums`) for all distances, times and
+counts so columns align — a dispatcher scans those vertically.
 
-**Layout:** full-bleed map with a fixed left rail (360px) holding input and results.
-The rail is dense and left-aligned, closer to a route sheet than a dashboard. On
-mobile the rail becomes a bottom sheet. Numbers get room; labels stay small and
-sentence case.
+This replaced Atkinson Hyperlegible Next, which was chosen for a legibility
+brief: a driver reading a printed manifest in a van. Geist keeps proper tabular
+figures, which is the part the stop list depends on. If the printed manifest
+ever proves hard to read in the field, that trade is the first thing to revisit.
 
-**Motion:** one place only — when a solve completes, routes draw on with a short
-staggered path animation, one vehicle after another. That single orchestrated
-moment shows what changed. Nothing else animates on load. Respect
+**Layout:** the marketing pages are centred, max 940px, with a sticky
+translucent header. The tool at `/plan` is a full-bleed map with a fixed left
+rail (360px) and no site header — someone on that page is working. On mobile
+the rail becomes a bottom sheet.
+
+**Motion:** two places only. Routes draw on after a solve, one vehicle after
+another — that single orchestrated moment shows what changed. And the arrow on
+a primary action nudges on hover, which is tied to a pointer already on the
+control. Nothing else animates, and nothing animates on load. Respect
 `prefers-reduced-motion`.
 
-**Copy:** plain verbs, sentence case, active voice. The button says "Plan routes"
-and the result heading says "Routes planned." Empty state is an instruction, not a
-mood: "Paste your delivery addresses, one per line." Errors state what happened and
-the fix: "Three addresses didn't match. Check them on the map before planning."
+**Copy:** plain verbs, sentence case, active voice. The button says "Plan
+routes" and the result heading says "Routes planned." Empty state is an
+instruction, not a mood: "Paste your delivery addresses, one per line." Errors
+state what happened and the fix: "Three addresses didn't match. Check them on
+the map before planning."
 
 ## Build order
 

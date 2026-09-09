@@ -1,29 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 /**
- * One family throughout, including the numbers.
+ * Geist, with its mono companion for code.
  *
- * Atkinson Hyperlegible Next is a legibility typeface, and legibility is the
- * actual brief here: a dispatcher scans a stop list on screen, a driver reads a
- * printed manifest in a van with the engine running. Its letterforms are drawn
- * so that characters people confuse — 1 l I, 0 O, 5 S — stay distinct, which
- * matters when the string is a house number.
+ * This replaces Atkinson Hyperlegible Next, which was chosen for a legibility
+ * brief — a driver reading a printed manifest in a van. Geist is a cleaner fit
+ * for the marketing pages and keeps proper tabular figures, which is the part
+ * the stop list actually depends on. If the manifest ever proves hard to read
+ * in the field, that trade is the first thing to revisit.
  */
-const hyperlegible = Atkinson_Hyperlegible_Next({
+const sans = Geist({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-hyperlegible",
+  variable: "--font-sans",
   display: "swap",
-  /*
-   * next/font has no fallback metrics for this family, so it logs "Failed to
-   * find font override values" on every build and skips the size-adjust
-   * optimisation anyway. Turning it off removes a warning that suggests a
-   * problem where there is none; the CSS stack in globals.css still provides a
-   * real fallback face.
-   */
-  adjustFontFallback: false,
+});
+
+const mono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -33,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FBFAF7",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   // The map fills the screen; letting it zoom the page under a pinch would
@@ -47,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={hyperlegible.variable}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SiteShell } from "@/components/site/SiteShell";
 import { PlanPreview } from "@/components/site/PlanPreview";
 import { HERO_STATS } from "@/components/site/heroPlan";
+import { Arrow } from "@/components/site/Arrow";
+import { ROUTE_COLORS } from "@/lib/routes";
 import { MAX_STOPS } from "@/lib/schema";
 import styles from "@/components/site/site.module.css";
 
@@ -24,28 +26,36 @@ export default function LandingPage() {
     <SiteShell>
       <div className={styles.wrap}>
         <section className={styles.hero}>
-          <div>
-            <h1 className={styles.heroTitle}>
-              Delivery routes in under two minutes.
-            </h1>
-            <p className={styles.heroLede}>
-              Paste your stops, check the pins, get a route for each driver.
-              No account, no subscription, nothing to install.
-            </p>
-            <div className={styles.heroActions}>
-              <Link href="/plan" className={styles.ctaLarge}>
-                Plan routes
-              </Link>
-              <Link href="/how-it-works" className={styles.ctaGhost}>
-                See how it works
-              </Link>
-            </div>
-            <p className={styles.heroNote}>
-              Free and open source. Up to {MAX_STOPS} stops per plan.
-            </p>
+          <span className={styles.badge}>
+            Paste &middot; Confirm &middot; Plan &middot; Send
+          </span>
+
+          <h1 className={styles.heroTitle}>
+            Delivery routes in under two minutes
+          </h1>
+          <p className={styles.heroLede}>
+            Paste your stops, check every pin, and get a route for each driver.
+            No account, no subscription, nothing to install — and your addresses
+            are never stored.
+          </p>
+
+          <div className={styles.heroActions}>
+            <Link href="/plan" className={styles.ctaLarge}>
+              Plan routes
+              <span className={styles.ctaArrow}>
+                <Arrow />
+              </span>
+            </Link>
+            <Link href="/how-it-works" className={styles.ctaGhost}>
+              See how it works
+            </Link>
           </div>
 
-          <div>
+          <p className={styles.heroNote}>
+            Free and open source. Up to {MAX_STOPS} stops per plan.
+          </p>
+
+          <div className={styles.heroFigure}>
             <PlanPreview />
             <p className={styles.previewCaption}>
               A real plan: {HERO_STATS.stops} stops, {HERO_STATS.vans} vans,{" "}
@@ -56,6 +66,7 @@ export default function LandingPage() {
         </section>
 
         <section className={styles.section}>
+          <p className={styles.eyebrow}>Measured, not estimated</p>
           <div className={styles.figures}>
             <div className={styles.figure}>
               <div className={styles.figureValue}>66%</div>
@@ -85,7 +96,7 @@ export default function LandingPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Three steps</h2>
+          <p className={styles.eyebrow}>How it works</p>
           <ol className={styles.steps}>
             <li className={styles.step}>
               <h3 className={styles.stepTitle}>Paste your addresses</h3>
@@ -113,7 +124,7 @@ export default function LandingPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>What it does not do</h2>
+          <p className={styles.eyebrow}>What it does not do</p>
           <ul className={styles.checkList}>
             <li>
               <strong>No accounts.</strong> Nothing to sign up for, nothing to
@@ -135,21 +146,54 @@ export default function LandingPage() {
         </section>
 
         <section className={styles.section}>
+          <p className={styles.eyebrow}>What you get out</p>
+          <div className={styles.chipPanel}>
+            <div>
+              <p className={styles.chipGroupLabel}>Four ways to export</p>
+              <div className={styles.chips}>
+                <span className={styles.chip}>CSV per driver</span>
+                <span className={styles.chip}>CSV, all routes</span>
+                <span className={styles.chip}>JSON</span>
+                <span className={styles.chip}>Printed manifest</span>
+              </div>
+            </div>
+            <div>
+              <p className={styles.chipGroupLabel}>A colour per vehicle</p>
+              <div className={styles.chips}>
+                {["Van 1", "Van 2", "Van 3", "Van 4"].map((label, i) => (
+                  <span key={label} className={styles.chip}>
+                    <span
+                      className={styles.chipDot}
+                      style={{ background: ROUTE_COLORS[i] }}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className={`${styles.sectionRuled} ${styles.sectionCentered}`}>
           <h2 className={styles.sectionTitle}>Built on an open API</h2>
-          <p className={styles.lede}>
+          <p className={styles.heroLede}>
             The map is a client of the same public endpoint you can call
-            yourself. Every plan the app makes is one <code>POST</code> — no key,
-            no account.
+            yourself. Every plan is one <code>POST</code> — no key, no account.
           </p>
-          <div className={styles.heroActions} style={{ marginTop: 18 }}>
+          <div className={styles.heroActions}>
+            <Link href="/plan" className={styles.ctaLarge}>
+              Plan routes
+              <span className={styles.ctaArrow}>
+                <Arrow />
+              </span>
+            </Link>
             <Link href="/api-docs" className={styles.ctaGhost}>
               Read the API docs
             </Link>
-            <Link href="/algorithms" className={styles.ctaGhost}>
-              How the routing works
-            </Link>
           </div>
         </section>
+
       </div>
     </SiteShell>
   );

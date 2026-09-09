@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Arrow } from "./Arrow";
 import styles from "./site.module.css";
 
 /**
@@ -25,7 +26,13 @@ export function SiteHeader() {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.brand}>
-        RoutePlan
+        <span className={styles.brandMark} aria-hidden="true">
+          R
+        </span>
+        <span className={styles.brandText}>
+          <span className={styles.brandName}>RoutePlan</span>
+          <span className={styles.brandTag}>Addresses &rarr; driver routes</span>
+        </span>
       </Link>
 
       <nav className={styles.nav} aria-label="Site">
@@ -44,6 +51,9 @@ export function SiteHeader() {
         })}
         <Link href="/plan" className={styles.cta}>
           Plan routes
+          <span className={styles.ctaArrow}>
+            <Arrow />
+          </span>
         </Link>
       </nav>
     </header>

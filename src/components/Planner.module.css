@@ -48,7 +48,7 @@
 }
 
 .wordmark:hover {
-  color: var(--signal);
+  color: var(--ink-soft);
 }
 
 .tagline {
@@ -99,7 +99,7 @@
   width: 100%;
   padding: 7px 8px;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--paper);
 }
 
@@ -133,14 +133,20 @@
 /* ----------------------------------------------------------------- buttons */
 
 .button {
-  padding: 7px 12px;
-  border: 1px solid var(--signal);
-  border-radius: 2px;
-  background: var(--signal);
-  color: var(--paper);
-  font-weight: 600;
+  padding: 8px 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .button:disabled {
@@ -152,29 +158,30 @@
 
 .secondary {
   composes: button;
-  border-color: var(--rule);
+  border-color: var(--rule-strong);
   background: var(--paper);
   color: var(--ink);
   font-weight: 500;
 }
 
 .secondary:hover:not(:disabled) {
-  background: var(--paper-sunk);
+  background: var(--paper-muted);
+  border-color: var(--rule-strong);
 }
 
 /* A toggle that is currently on reads as pressed, not as a second primary. */
 .toggleOn {
   composes: secondary;
-  border-color: var(--signal);
-  background: var(--signal-tint);
-  color: var(--signal);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .linkButton {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--signal);
+  color: var(--ink);
   font-size: 12px;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -210,11 +217,11 @@
 }
 
 .stopSelected {
-  background: var(--signal-tint);
+  background: var(--paper-muted);
 }
 
 .stopSelected:hover {
-  background: var(--signal-tint);
+  background: var(--paper-muted);
 }
 
 .index {
@@ -316,7 +323,9 @@
 }
 
 .candidate:hover {
-  color: var(--signal);
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .candidateMeta {
@@ -353,12 +362,12 @@
 
 .progressFill {
   height: 100%;
-  background: var(--signal);
+  background: var(--primary);
 }
 
 .notice {
   padding: 10px 16px;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--warn-rule);
   background: var(--warn-tint);
   color: var(--warn);
   font-size: 12px;
@@ -442,7 +451,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -481,7 +490,7 @@
 .segmented {
   display: flex;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -502,9 +511,9 @@
 
 .segmentActive {
   composes: segment;
-  background: var(--signal-tint);
-  color: var(--signal);
-  font-weight: 600;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
 }
 
 .select {
@@ -556,7 +565,7 @@
 }
 
 .saving {
-  color: var(--signal);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -732,7 +741,7 @@
   max-height: 220px;
   overflow: auto;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--paper-sunk);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -778,7 +787,7 @@
 
 /* The winner in a column, marked by weight and colour, not by a background. */
 .tableBest {
-  color: var(--signal);
+  color: var(--ink);
   font-weight: 700;
 }
 

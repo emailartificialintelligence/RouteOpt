@@ -18,23 +18,56 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 0 20px;
-  height: 52px;
-  background: var(--paper);
+  padding: 0 24px;
+  height: 60px;
+  /* Translucent, so the dotted ground shows through as the page scrolls under. */
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(8px);
   border-bottom: 1px solid var(--rule);
 }
 
+/* Mark, wordmark, and a line of what it is — as on the reference. */
 .brand {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 14px;
+  font-weight: 600;
+  flex: none;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.brandName {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.brandTag {
+  font-size: 11px;
+  color: var(--ink-soft);
 }
 
 .nav {
@@ -63,28 +96,61 @@
 
 /* The one primary action on every page. No arrow appended. */
 .cta {
-  padding: 6px 12px;
-  border: 1px solid var(--signal);
-  border-radius: 2px;
-  background: var(--signal);
-  color: var(--paper);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
+  transition: background-color 120ms ease;
+}
+
+.cta:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .ctaLarge {
   composes: cta;
-  padding: 10px 18px;
-  font-size: 15px;
+  padding: 12px 24px;
+  font-size: 14px;
 }
 
 .ctaGhost {
   composes: cta;
-  border-color: var(--rule);
+  border-color: var(--rule-strong);
   background: var(--paper);
   color: var(--ink);
+}
+
+.ctaGhost:hover {
+  background: var(--paper-muted);
+  border-color: var(--rule-strong);
+}
+
+/*
+ * The arrow nudges on hover. It is the only motion on these pages, and it is
+ * tied to a pointer already on the control — nothing moves on its own.
+ */
+.ctaArrow {
+  transition: transform 140ms ease;
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .ctaArrow {
+    transition: none;
+  }
 }
 
 /* On a phone the secondary links go; the action stays. */
@@ -145,16 +211,24 @@
 }
 
 .prose code {
-  padding: 1px 4px;
+  padding: 2px 5px;
   border: 1px solid var(--rule);
-  border-radius: 2px;
-  background: var(--paper-sunk);
+  border-radius: 4px;
+  background: var(--paper-muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
 }
 
 .prose a {
-  color: var(--signal);
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--rule-strong);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--ink);
 }
 
 .lede {
@@ -164,28 +238,63 @@
 }
 
 .pageTitle {
-  margin: 40px 0 8px;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  margin: 52px 0 10px;
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
 .section {
-  padding: 44px 0;
+  padding: 56px 0;
+}
+
+.sectionRuled {
+  composes: section;
   border-top: 1px solid var(--rule);
 }
 
 .sectionTitle {
-  margin: 0 0 18px;
-  font-size: 19px;
-  font-weight: 700;
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/*
+ * The spaced small-caps section label from the reference, with a rule either
+ * side. CLAUDE.md previously banned this; the house style now calls for it.
+ */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 0 30px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before,
+.eyebrow::after {
+  content: "";
+  flex: 1;
+  max-width: 90px;
+  height: 1px;
+  background: var(--rule);
+}
+
+.sectionCentered {
+  text-align: center;
 }
 
 /* ------------------------------------------------------------------ footer */
 
 .footer {
-  margin-top: 56px;
-  padding: 24px 20px 40px;
+  margin-top: 72px;
+  padding: 28px 24px 48px;
   border-top: 1px solid var(--rule);
   color: var(--ink-soft);
   font-size: 12px;
@@ -218,51 +327,77 @@
 /* ------------------------------------------------------------------- hero */
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 40px;
+  padding: 72px 0 56px;
+  text-align: center;
+}
+
+/* A quiet pill saying what kind of thing this is, above the headline. */
+.badge {
+  display: inline-flex;
   align-items: center;
-  padding: 56px 0 48px;
+  gap: 8px;
+  margin-bottom: 26px;
+  padding: 6px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .heroTitle {
-  margin: 0 0 14px;
-  font-size: 38px;
-  line-height: 1.12;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  margin: 0 auto 18px;
+  max-width: 15ch;
+  font-size: 52px;
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
 .heroLede {
-  margin: 0 0 22px;
-  font-size: 17px;
-  line-height: 1.55;
+  margin: 0 auto 30px;
+  max-width: 60ch;
+  font-size: 16px;
+  line-height: 1.65;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 .heroActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
+  justify-content: center;
 }
 
 .heroNote {
-  margin: 14px 0 0;
+  margin: 18px 0 0;
   color: var(--ink-soft);
   font-size: 13px;
+}
+
+/* Sits below the fold-line content, framed like the reference's panels. */
+.heroFigure {
+  margin: 48px auto 0;
+  max-width: 880px;
 }
 
 .preview {
   width: 100%;
   height: auto;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius);
   display: block;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 8px 28px rgba(9, 9, 11, 0.06);
 }
 
 .previewCaption {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
+  text-align: center;
   color: var(--ink-soft);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -270,12 +405,14 @@
 
 @media (max-width: 860px) {
   .hero {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    padding: 32px 0;
+    padding: 44px 0 36px;
   }
   .heroTitle {
-    font-size: 30px;
+    font-size: 34px;
+    max-width: 20ch;
+  }
+  .heroLede {
+    font-size: 15px;
   }
 }
 
@@ -287,76 +424,81 @@
  */
 .figures {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
 }
 
 .figure {
-  padding: 16px;
+  padding: 20px;
   background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
 }
 
 .figureValue {
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 .figureLabel {
-  margin-top: 4px;
+  margin-top: 8px;
   color: var(--ink-soft);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
 /* -------------------------------------------------------------------- steps */
 
 .steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 26px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
   counter-reset: step;
+  text-align: left;
 }
 
 .step {
   counter-increment: step;
-  padding-top: 14px;
-  border-top: 2px solid var(--signal);
+  padding: 20px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
 }
 
-/*
- * A numeral and a rule, the way a form numbers its sections. Not a circled
- * digit in a shadowed card.
- */
+/* A dark numbered disc, as on the reference. */
 .step::before {
   content: counter(step);
-  display: block;
-  margin-bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--signal);
 }
 
 .stepTitle {
-  margin: 0 0 5px;
+  margin: 0 0 6px;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .stepBody {
   margin: 0;
   color: var(--ink-soft);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 /* ------------------------------------------------------------- plain lists */
@@ -366,31 +508,72 @@
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px 26px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  text-align: left;
 }
 
 .checkList li {
-  padding-left: 16px;
-  position: relative;
+  padding: 18px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
   color: var(--ink-soft);
   font-size: 13px;
-  line-height: 1.55;
-}
-
-.checkList li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 8px;
-  width: 7px;
-  height: 1px;
-  background: var(--ink-soft);
+  line-height: 1.6;
 }
 
 .checkList strong {
+  display: block;
+  margin-bottom: 4px;
   color: var(--ink);
+  font-size: 14px;
   font-weight: 600;
+}
+
+/* A bordered panel of chips, as on the reference. */
+.chipPanel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  padding: 24px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-align: left;
+}
+
+.chipGroupLabel {
+  margin: 0 0 12px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunk);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
 }
 
 /* ------------------------------------------------------------------ panels */
@@ -411,7 +594,8 @@
   height: auto;
   display: block;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius);
+  background: var(--paper);
 }
 
 .panelCaption {
@@ -459,13 +643,13 @@
 /* --------------------------------------------------------------- code block */
 
 .code {
-  margin: 14px 0;
-  padding: 12px;
+  margin: 16px 0;
+  padding: 16px;
   overflow-x: auto;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--paper-sunk);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.6;
   white-space: pre;
@@ -473,16 +657,19 @@
 
 /* A note that is worth pausing on, without shouting. */
 .aside {
-  margin: 18px 0;
-  padding: 12px 14px;
-  border-left: 2px solid var(--signal);
-  background: var(--signal-tint);
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--paper-sunk);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .asideWarn {
   composes: aside;
+  border-color: var(--warn-rule);
   border-left-color: var(--warn);
   background: var(--warn-tint);
 }
