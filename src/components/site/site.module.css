@@ -576,6 +576,9 @@
 
 .checkList li {
   padding: 18px;
+  /* Opaque, like every other card. Without this the dotted ground shows
+     through the box and the card stops reading as a surface. */
+  background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   color: var(--ink-soft);
@@ -625,7 +628,7 @@
   padding: 6px 12px;
   border: 1px solid var(--rule);
   border-radius: var(--radius-sm);
-  background: var(--paper-sunk);
+  background: var(--paper-muted);
   font-size: 12.5px;
   white-space: nowrap;
 }

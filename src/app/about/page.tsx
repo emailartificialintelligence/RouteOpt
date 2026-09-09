@@ -10,6 +10,16 @@ export const metadata: Metadata = {
     "An open-source route optimiser for small delivery operations. What it is, what it deliberately is not, and where it falls short.",
 };
 
+/**
+ * Rendered per request.
+ *
+ * The Content-Security-Policy in middleware.ts carries a per-request nonce, and
+ * a statically prerendered page has no request to take one from — Next emits it
+ * with no nonce and the policy then blocks every script on the page. In
+ * development that never shows up, because dev renders everything dynamically.
+ */
+export const dynamic = "force-dynamic";
+
 export default function AboutPage() {
   return (
     <SiteShell>

@@ -10,6 +10,16 @@ export const metadata: Metadata = {
     "Why the solver clusters before it sequences, what 2-opt and Or-opt do, and how OR-Tools compares. With measured numbers.",
 };
 
+/**
+ * Rendered per request.
+ *
+ * The Content-Security-Policy in middleware.ts carries a per-request nonce, and
+ * a statically prerendered page has no request to take one from — Next emits it
+ * with no nonce and the policy then blocks every script on the page. In
+ * development that never shows up, because dev renders everything dynamically.
+ */
+export const dynamic = "force-dynamic";
+
 export default function AlgorithmsPage() {
   return (
     <SiteShell>
@@ -191,6 +201,94 @@ export default function AlgorithmsPage() {
           For comparison, visiting those forty stops in the order they were
           pasted is 266 km.
         </p>
+
+        <h2>The engines</h2>
+        <p>
+          Four engines exist in the registry. Two are built; two are named so
+          the selector can say what is coming rather than showing a dead control
+          with no explanation. Which are actually available depends on how this
+          instance is configured — ask{" "}
+          <code>GET /api/v1/solve</code> and it will tell you.
+        </p>
+
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Engine</th>
+              <th style={{ textAlign: "left" }}>Status</th>
+              <th style={{ textAlign: "left" }}>What it is</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Fast</strong>
+                <br />
+                <code>greedy</code>
+              </td>
+              <td style={{ textAlign: "left" }}>
+                <strong>Active.</strong> Always available — no setup, no
+                dependencies.
+              </td>
+              <td style={{ textAlign: "left" }}>
+                Cluster-first, then nearest neighbour with 2-opt and Or-opt, as
+                described above. Returns in milliseconds.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Balanced</strong>
+                <br />
+                <code>ortools</code>
+              </td>
+              <td style={{ textAlign: "left" }}>
+                <strong>Built, needs a sidecar.</strong> Active only where
+                <code>ORTOOLS_URL</code> is set. Off on this deployment.
+              </td>
+              <td style={{ textAlign: "left" }}>
+                Google OR-Tools with guided local search, in a Python process
+                beside the app. Found 16% shorter routes on the test above, and
+                took about a thousand times longer to do it.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Best quality</strong>
+                <br />
+                <code>pyvrp</code>
+              </td>
+              <td style={{ textAlign: "left" }}>
+                <strong>Not built.</strong> Listed as coming soon.
+              </td>
+              <td style={{ textAlign: "left" }}>
+                Hybrid genetic search. The strongest routes available for this
+                class of problem, given a longer time budget.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>VRoom</strong>
+                <br />
+                <code>vroom</code>
+              </td>
+              <td style={{ textAlign: "left" }}>
+                <strong>Not built.</strong> Listed as coming soon.
+              </td>
+              <td style={{ textAlign: "left" }}>
+                A lightweight open-source engine, quick on mid-sized problems.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className={styles.aside}>
+          Adding an engine is a file and a registry entry — every one implements
+          the same <code>solve(problem, matrix)</code> interface, and the leg
+          arithmetic, arrival times and totals are shared. That is what makes
+          the comparison honest: a difference in the table means a difference in
+          routing, not two implementations disagreeing about how to add up
+          minutes.
+        </div>
 
         <h2>What is deliberately not modelled</h2>
         <ul>

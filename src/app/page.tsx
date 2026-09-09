@@ -16,6 +16,16 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Rendered per request.
+ *
+ * The Content-Security-Policy in middleware.ts carries a per-request nonce, and
+ * a statically prerendered page has no request to take one from — Next emits it
+ * with no nonce and the policy then blocks every script on the page. In
+ * development that never shows up, because dev renders everything dynamically.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * The landing page.
  *
  * Every claim here is a measured number from a real solve, not a rounded-up
