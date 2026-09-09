@@ -83,49 +83,21 @@ body {
 }
 
 /*
- * A soft light behind the top of the page so the headline sits on clean paper,
- * fading out well before the fold. Deliberately not a full-page scrim: the last
- * version washed the dots out everywhere and the texture may as well not have
- * been there.
+ * No glow, no scrim, no fade.
+ *
+ * There was a white gradient over the top 520px so the landing headline sat on
+ * clean paper — but it applied to every page, and on the content pages it wiped
+ * the dots out of exactly the region a reader sees first. The texture then
+ * looked inconsistent from page to page, which is worse than either extreme.
+ *
+ * Readability over the dots is handled where it belongs: the prose column
+ * carries its own translucent panel, so the text never has to fight them.
  */
-.dotted::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 520px;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    ellipse 58% 100% at 50% 4%,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(255, 255, 255, 0.42) 46%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
 
 /* Everything real sits above the texture. */
 .dotted > * {
   position: relative;
   z-index: 1;
-}
-
-.dotted::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /*
-   * Behind the content. Without this the fade sits on top and washes out every
-   * word on the page — the overlay is texture, not a scrim.
-   */
-  z-index: 0;
-  /* Fades the dots out towards the edges so they never fight the text. */
-  background: radial-gradient(
-    ellipse 80% 55% at 50% 0%,
-    rgba(255, 255, 255, 0.92),
-    rgba(255, 255, 255, 0.55) 45%,
-    rgba(255, 255, 255, 0.9) 100%
-  );
 }
 
 *,
