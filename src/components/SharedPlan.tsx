@@ -76,7 +76,9 @@ export function SharedPlan({ problem, solution, createdAt }: SharedPlanProps) {
     <div className={styles.shell}>
       <aside className={styles.rail} aria-label="Shared plan">
         <header className={styles.masthead}>
-          <h1 className={styles.wordmark}>RoutePlan</h1>
+          <a className={styles.wordmark} href="/">
+            RoutePlan
+          </a>
           <span className={styles.tagline}>Shared plan</span>
         </header>
 

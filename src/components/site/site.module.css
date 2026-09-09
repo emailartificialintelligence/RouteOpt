@@ -1,0 +1,394 @@
+/*
+ * Chrome for the content pages.
+ *
+ * Same vernacular as the tool: paper, hairlines, transit blue, tabular figures.
+ * A landing page is where a project usually abandons its own design language in
+ * favour of gradients and soft-shadowed cards; this one does not, because the
+ * thing being sold is a working instrument and it should look like one.
+ */
+
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.navLink {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: var(--ink);
+}
+
+.navLinkActive {
+  composes: navLink;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The one primary action on every page. No arrow appended. */
+.cta {
+  padding: 6px 12px;
+  border: 1px solid var(--signal);
+  border-radius: 2px;
+  background: var(--signal);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ctaLarge {
+  composes: cta;
+  padding: 10px 18px;
+  font-size: 15px;
+}
+
+.ctaGhost {
+  composes: cta;
+  border-color: var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* On a phone the secondary links go; the action stays. */
+@media (max-width: 720px) {
+  .nav {
+    gap: 12px;
+  }
+  .navLink {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.main {
+  flex: 1;
+}
+
+.wrap {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Prose columns stay narrow. Long measure is the enemy of a page people read. */
+.prose {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.prose h2 {
+  margin: 34px 0 10px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.prose h3 {
+  margin: 24px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.prose p {
+  margin: 0 0 14px;
+  line-height: 1.65;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  line-height: 1.65;
+}
+
+.prose li {
+  margin-bottom: 6px;
+}
+
+.prose code {
+  padding: 1px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-sunk);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.prose a {
+  color: var(--signal);
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.pageTitle {
+  margin: 40px 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.section {
+  padding: 44px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.sectionTitle {
+  margin: 0 0 18px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+  margin-top: 56px;
+  padding: 24px 20px 40px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.footerInner {
+  max-width: 940px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: baseline;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.footer a {
+  color: var(--ink-soft);
+}
+
+.footer a:hover {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------- hero */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 40px;
+  align-items: center;
+  padding: 56px 0 48px;
+}
+
+.heroTitle {
+  margin: 0 0 14px;
+  font-size: 38px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.heroLede {
+  margin: 0 0 22px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.heroNote {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.preview {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  display: block;
+}
+
+.previewCaption {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 860px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 32px 0;
+  }
+  .heroTitle {
+    font-size: 30px;
+  }
+}
+
+/* ------------------------------------------------------------------ figures */
+
+/*
+ * The measured numbers, given room. This is a dispatcher's screen: the figure
+ * is the point and the label is only there to say which figure it is.
+ */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.figure {
+  padding: 16px;
+  background: var(--paper);
+}
+
+.figureValue {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.figureLabel {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* -------------------------------------------------------------------- steps */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  counter-increment: step;
+  padding-top: 14px;
+  border-top: 2px solid var(--signal);
+}
+
+/*
+ * A numeral and a rule, the way a form numbers its sections. Not a circled
+ * digit in a shadowed card.
+ */
+.step::before {
+  content: counter(step);
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--signal);
+}
+
+.stepTitle {
+  margin: 0 0 5px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.stepBody {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------- plain lists */
+
+.checkList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 26px;
+}
+
+.checkList li {
+  padding-left: 16px;
+  position: relative;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.checkList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 7px;
+  height: 1px;
+  background: var(--ink-soft);
+}
+
+.checkList strong {
+  color: var(--ink);
+  font-weight: 600;
+}

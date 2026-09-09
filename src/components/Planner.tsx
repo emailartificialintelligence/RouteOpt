@@ -425,7 +425,10 @@ export function Planner() {
     <div className={styles.shell}>
       <aside className={styles.rail} aria-label="Plan">
         <header className={styles.masthead}>
-          <h1 className={styles.wordmark}>RoutePlan</h1>
+          {/* The only route back to the site from the tool. */}
+          <a className={styles.wordmark} href="/">
+            RoutePlan
+          </a>
           <span className={styles.tagline}>No account needed</span>
         </header>
 
