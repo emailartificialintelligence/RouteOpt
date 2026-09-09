@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/site/SiteShell";
 import { PlanPreview } from "@/components/site/PlanPreview";
 import { HERO_STATS } from "@/components/site/heroPlan";
 import { Arrow } from "@/components/site/Arrow";
+import { Reveal } from "@/components/site/Reveal";
 import { ROUTE_COLORS } from "@/lib/routes";
 import { MAX_STOPS } from "@/lib/schema";
 import styles from "@/components/site/site.module.css";
@@ -65,7 +66,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className={styles.section}>
+        <Reveal as="section" className={styles.section}>
           <p className={styles.eyebrow}>Measured, not estimated</p>
           <div className={styles.figures}>
             <div className={styles.figure}>
@@ -93,9 +94,9 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </Reveal>
 
-        <section className={styles.section}>
+        <Reveal as="section" className={styles.section}>
           <p className={styles.eyebrow}>How it works</p>
           <ol className={styles.steps}>
             <li className={styles.step}>
@@ -121,9 +122,9 @@ export default function LandingPage() {
               </p>
             </li>
           </ol>
-        </section>
+        </Reveal>
 
-        <section className={styles.section}>
+        <Reveal as="section" className={styles.section}>
           <p className={styles.eyebrow}>What it does not do</p>
           <ul className={styles.checkList}>
             <li>
@@ -143,9 +144,9 @@ export default function LandingPage() {
               public API, and the whole thing is MIT licensed.
             </li>
           </ul>
-        </section>
+        </Reveal>
 
-        <section className={styles.section}>
+        <Reveal as="section" className={styles.section}>
           <p className={styles.eyebrow}>What you get out</p>
           <div className={styles.chipPanel}>
             <div>
@@ -173,9 +174,9 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </Reveal>
 
-        <section className={`${styles.sectionRuled} ${styles.sectionCentered}`}>
+        <Reveal as="section" className={`${styles.sectionRuled} ${styles.sectionCentered}`}>
           <h2 className={styles.sectionTitle}>Built on an open API</h2>
           <p className={styles.heroLede}>
             The map is a client of the same public endpoint you can call
@@ -192,7 +193,7 @@ export default function LandingPage() {
               Read the API docs
             </Link>
           </div>
-        </section>
+        </Reveal>
 
       </div>
     </SiteShell>

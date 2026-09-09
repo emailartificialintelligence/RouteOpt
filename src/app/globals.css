@@ -62,15 +62,40 @@ body {
 }
 
 /*
- * The dotted ground from the reference. Kept very faint and behind everything,
- * so it reads as paper texture rather than as content — and switched off on the
- * tool, where the map fills the screen and any pattern behind it is noise.
+ * The dotted ground.
+ *
+ * Evident rather than hinted at, and carried the full height of every page —
+ * on the reference it is a texture you notice, not one you have to look for.
+ * The dot is zinc-300 at 20px spacing; any lighter and it disappears on a
+ * bright screen, any tighter and it starts to shimmer while scrolling.
  */
 .dotted {
   position: relative;
-  background-image: radial-gradient(circle at 1px 1px, #e4e4e7 1px, transparent 0);
-  background-size: 22px 22px;
+  background-color: var(--paper);
+  background-image: radial-gradient(circle at 1px 1px, #d4d4d8 1.1px, transparent 0);
+  background-size: 20px 20px;
   isolation: isolate;
+}
+
+/*
+ * A soft light behind the top of the page so the headline sits on clean paper,
+ * fading out well before the fold. Deliberately not a full-page scrim: the last
+ * version washed the dots out everywhere and the texture may as well not have
+ * been there.
+ */
+.dotted::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 520px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 58% 100% at 50% 4%,
+    rgba(255, 255, 255, 0.86) 0%,
+    rgba(255, 255, 255, 0.42) 46%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 /* Everything real sits above the texture. */

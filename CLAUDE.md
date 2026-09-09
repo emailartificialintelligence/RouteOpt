@@ -103,11 +103,22 @@ translucent header. The tool at `/plan` is a full-bleed map with a fixed left
 rail (360px) and no site header — someone on that page is working. On mobile
 the rail becomes a bottom sheet.
 
-**Motion:** two places only. Routes draw on after a solve, one vehicle after
-another — that single orchestrated moment shows what changed. And the arrow on
-a primary action nudges on hover, which is tied to a pointer already on the
-control. Nothing else animates, and nothing animates on load. Respect
-`prefers-reduced-motion`.
+**Motion:** subtle, short, and always tied to something real.
+
+- Sections on the marketing pages fade up 14px as they come into view, once
+  each. Content already on screen at load renders immediately — animating what
+  someone came to read, before they can read it, is a tax not a flourish.
+- Cards and the hero figure lift 2–3px under the pointer.
+- The arrow on a primary action nudges on hover.
+- Routes draw on after a solve, one vehicle after another. That remains the one
+  orchestrated moment in the product.
+
+Two rules that are not negotiable. **A reveal must never be the only thing
+standing between a reader and the words**: the observer that drives it has a
+failsafe timer, because a callback that does not fire would otherwise leave the
+page permanently blank. And **`prefers-reduced-motion` means none, not less** —
+the reduced branch renders the final state with no transition, rather than a
+faster one.
 
 **Copy:** plain verbs, sentence case, active voice. The button says "Plan
 routes" and the result heading says "Routes planned." Empty state is an

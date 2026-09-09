@@ -176,38 +176,63 @@
 }
 
 /* Prose columns stay narrow. Long measure is the enemy of a page people read. */
+/*
+ * Reading measure and rhythm.
+ *
+ * 68 characters is the comfortable line length for continuous prose; much
+ * beyond it the eye loses the start of the next line. Body text is 15.5px with
+ * generous leading — the algorithms page is genuinely long, and 14px set tight
+ * is fine for a dense stop list but tiring for six paragraphs about k-means.
+ */
 .prose {
-  max-width: 660px;
+  max-width: 68ch;
   margin: 0 auto;
   padding: 0 20px;
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: #3f3f46;
 }
 
 .prose h2 {
-  margin: 34px 0 10px;
-  font-size: 19px;
-  font-weight: 700;
+  margin: 48px 0 14px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  text-wrap: balance;
 }
 
 .prose h3 {
-  margin: 24px 0 6px;
-  font-size: 15px;
+  margin: 32px 0 8px;
+  font-size: 16px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 .prose p {
-  margin: 0 0 14px;
-  line-height: 1.65;
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .prose ul,
 .prose ol {
-  margin: 0 0 14px;
-  padding-left: 20px;
-  line-height: 1.65;
+  margin: 0 0 18px;
+  padding-left: 22px;
 }
 
 .prose li {
-  margin-bottom: 6px;
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+.prose li::marker {
+  color: var(--ink-soft);
 }
 
 .prose code {
@@ -220,28 +245,44 @@
   font-size: 12px;
 }
 
-.prose a {
+/*
+ * Only bare links. A button inside prose carries its own class, and this rule
+ * was repainting those black-on-black with an underline through them — the
+ * "Try it in the app" control was effectively invisible.
+ */
+.prose a:not([class]) {
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-color: var(--rule-strong);
 }
 
-.prose a:hover {
+.prose a:not([class]):hover {
   text-decoration-color: var(--ink);
 }
 
+/* Belt and braces: nothing underlines or recolours a button. */
+.cta,
+.ctaLarge,
+.ctaGhost {
+  text-decoration: none;
+}
+
 .lede {
-  font-size: 17px;
-  line-height: 1.55;
+  font-size: 18px;
+  line-height: 1.65;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 .pageTitle {
-  margin: 52px 0 10px;
-  font-size: 36px;
+  margin: 64px 0 14px;
+  font-size: 40px;
   font-weight: 600;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.038em;
+  line-height: 1.08;
+  color: var(--ink);
+  text-wrap: balance;
 }
 
 .section {
@@ -357,10 +398,10 @@
 }
 
 .heroLede {
-  margin: 0 auto 30px;
-  max-width: 60ch;
-  font-size: 16px;
-  line-height: 1.65;
+  margin: 0 auto 32px;
+  max-width: 56ch;
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--ink-soft);
   text-wrap: pretty;
 }
@@ -672,4 +713,93 @@
   border-color: var(--warn-rule);
   border-left-color: var(--warn);
   background: var(--warn-tint);
+}
+
+/* ---------------------------------------------------------------- motion */
+
+/*
+ * The reveal. Short, small, and once per element.
+ *
+ * 14px of travel and 500ms: far enough to register as movement, not so far
+ * that the page appears to assemble itself. A long or bouncy easing here reads
+ * as a website performing rather than a tool working.
+ */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.revealShown {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* Cards lift very slightly under the pointer. Tied to a deliberate hover. */
+.figure,
+.step,
+.checkList li {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.figure:hover,
+.step:hover,
+.checkList li:hover {
+  transform: translateY(-2px);
+  border-color: var(--rule-strong);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 10px 24px rgba(9, 9, 11, 0.06);
+}
+
+/* The hero figure gets a slightly deeper lift; it is the page's centrepiece. */
+.heroFigure .preview {
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms ease;
+}
+
+.heroFigure:hover .preview {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(9, 9, 11, 0.05), 0 18px 48px rgba(9, 9, 11, 0.10);
+}
+
+.badge {
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.badge:hover {
+  border-color: var(--rule-strong);
+}
+
+/*
+ * Reduced motion means none, not less. Everything above resolves to its final
+ * state with no transition — a shortened animation is still an animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .figure,
+  .step,
+  .checkList li,
+  .heroFigure .preview,
+  .badge {
+    transition: none;
+  }
+
+  .figure:hover,
+  .step:hover,
+  .checkList li:hover,
+  .heroFigure:hover .preview {
+    transform: none;
+  }
 }
