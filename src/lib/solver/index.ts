@@ -38,17 +38,27 @@ const configured = SIDECAR_URL !== "";
  * is a latency decision, not a correctness one. They differ in what the extra
  * seconds are worth:
  *
- *   ortools  guided local search converges fast on problems this size and then
- *            polishes. Measured: a 12-stop plan was identical at 250ms and 5s.
+ *   ortools  guided local search. Twelve stops converge inside 250ms; forty
+ *            were still improving at five seconds. Both are true, which is why
+ *            the curve is quadratic rather than a single number.
  *   pyvrp    a genetic algorithm, and the one offered as "best quality". Time
  *            is the entire reason to pick it, so it gets the most.
- *   vroom    picked for being quick. Spending seconds in it defeats the point;
- *            its budget is mostly a safety net.
+ *   vroom    picked for being quick, and it takes no time budget at all — it
+ *            runs an exploration level to completion. Its budget only bounds
+ *            the cap search behind "even workload".
  */
 const BUDGETS: Record<string, BudgetPolicy> = {
-  ortools: { msPerStop: 40, floorMs: 250 },
-  pyvrp: { msPerStop: 120, floorMs: 1_000 },
-  vroom: { msPerStop: 20, floorMs: 250 },
+  // 3ms per stop squared: ~680ms at 12 stops, ~5s at 40, and past the caller's
+  // ceiling by 60 — which is the shape the measurements have. Twelve stops
+  // converge inside 250ms; forty were still improving at 5s.
+  ortools: { msPerStopSquared: 3, floorMs: 250 },
+  // The engine offered as "best quality". Time is the entire reason to pick it
+  // over the other two, so it gets the most and starts from a higher floor.
+  pyvrp: { msPerStopSquared: 5, floorMs: 1_000 },
+  // Picked for being quick, and it does not take a time budget at all — it runs
+  // an exploration level to completion. This only bounds the cap search it does
+  // for "even workload", which is several solves rather than one.
+  vroom: { msPerStopSquared: 1, floorMs: 250 },
 };
 
 const sidecarSolver = (

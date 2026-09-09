@@ -62,11 +62,18 @@ export type SidecarTransport = (
  */
 export interface BudgetPolicy {
   /**
-   * Roughly how long a stop is worth searching. The search space grows far
-   * faster than linearly, but the useful *search* time does not: past a point
-   * the metaheuristic is refining a plan it will not meaningfully beat.
+   * Search time per stop *squared*.
+   *
+   * Linear was the first attempt and is wrong. Measured on 40 stops and 3 vans
+   * over real road distances, OR-Tools returned a 35.0km worst route at 1.6s
+   * and 33.7km at 5s — so a linear 40ms-per-stop budget was leaving real
+   * quality on the table at exactly the size a working round is. Meanwhile
+   * twelve stops converge inside 250ms.
+   *
+   * A quadratic term fits both ends because the space these engines search
+   * grows with the square of the stop count: pairs of stops to swap, not stops.
    */
-  msPerStop: number;
+  msPerStopSquared: number;
   /** Below this, process startup dominates and there is nothing to gain. */
   floorMs: number;
 }
@@ -87,7 +94,8 @@ export function budgetForProblem(
   requestedMs: number,
   policy: BudgetPolicy,
 ): number {
-  const wanted = Math.max(policy.floorMs, stopCount * policy.msPerStop);
+  const stops = Math.max(0, stopCount);
+  const wanted = policy.floorMs + policy.msPerStopSquared * stops * stops;
   return Math.max(1, Math.min(requestedMs, Math.round(wanted)));
 }
 

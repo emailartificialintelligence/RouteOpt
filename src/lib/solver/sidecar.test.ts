@@ -53,7 +53,7 @@ function matrixOf(problem: Problem): Matrix {
 const transportReturning = (response: SidecarResponse): SidecarTransport =>
   vi.fn(async () => response);
 
-const POLICY: BudgetPolicy = { msPerStop: 40, floorMs: 250 };
+const POLICY: BudgetPolicy = { msPerStopSquared: 3, floorMs: 250 };
 
 const ORTOOLS_CONFIG: SidecarSolverConfig = {
   name: "ortools",
@@ -94,7 +94,8 @@ describe("buildSidecarRequest", () => {
     // These engines run until the clock stops rather than until they converge,
     // so a 3-stop plan handed 4.5s waits 4.5s for an answer it had in 250ms.
     const problem = problemOf(3, 1, { timeBudgetMs: 4500 });
-    expect(requestFor(problem).timeBudgetMs).toBe(250);
+    // 250ms floor + 3ms x 9 stops-squared.
+    expect(requestFor(problem).timeBudgetMs).toBe(277);
   });
 });
 
@@ -113,8 +114,26 @@ describe("budgetForProblem", () => {
   });
 
   it("does not drop below the floor, where startup dominates", () => {
-    expect(budgetForProblem(1, 10_000, POLICY)).toBe(POLICY.floorMs);
     expect(budgetForProblem(0, 10_000, POLICY)).toBe(POLICY.floorMs);
+    expect(budgetForProblem(1, 10_000, POLICY)).toBeGreaterThanOrEqual(
+      POLICY.floorMs,
+    );
+  });
+
+  it("grows faster than linearly, because the search space does", () => {
+    // A linear budget was the first attempt. It gave 40 stops 1.6s where they
+    // were still improving at 5s, making the Balanced engine measurably worse
+    // than it had been on exactly the size a real delivery round is.
+    const small = budgetForProblem(10, 60_000, POLICY);
+    const double = budgetForProblem(20, 60_000, POLICY);
+    expect(double).toBeGreaterThan(small * 2);
+  });
+
+  it("reaches about five seconds at forty stops", () => {
+    // The measured plateau for OR-Tools on a 40-stop round.
+    const budget = budgetForProblem(40, 60_000, POLICY);
+    expect(budget).toBeGreaterThan(4_000);
+    expect(budget).toBeLessThan(6_000);
   });
 
   it("always asks for at least a millisecond", () => {
