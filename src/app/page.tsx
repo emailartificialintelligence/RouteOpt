@@ -73,6 +73,25 @@ export default function LandingPage() {
               {HERO_STATS.totalKm} km — down from {HERO_STATS.baselineKm} km in
               the order they were pasted.
             </p>
+            {/* Required by the tile source, and by the people whose survey work
+                the basemap is. Same credit the map inside the product carries. */}
+            <p className={styles.previewAttribution}>
+              Basemap{" "}
+              <a href="https://openfreemap.org" rel="noopener noreferrer">
+                OpenFreeMap
+              </a>{" "}
+              ·{" "}
+              <a href="https://www.openmaptiles.org/" rel="noopener noreferrer">
+                © OpenMapTiles
+              </a>{" "}
+              · Data{" "}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                rel="noopener noreferrer"
+              >
+                © OpenStreetMap contributors
+              </a>
+            </p>
           </div>
         </section>
 
